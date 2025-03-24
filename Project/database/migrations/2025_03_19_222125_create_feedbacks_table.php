@@ -13,7 +13,7 @@ return new class extends Migration
 {
     Schema::create('feedbacks', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
+        $table->foreignId('student_id')->constrained()->onDelete('cascade');
         $table->foreignId('professor_id')->constrained()->onDelete('cascade');
         $table->integer('rating');
         $table->text('comment')->nullable();
