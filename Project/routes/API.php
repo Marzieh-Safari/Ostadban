@@ -8,9 +8,10 @@ use App\Http\Controllers\ProfessorController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminSystemController;
 
+
 Route::apiResource('students', StudentController::class);
-Route::apiResource('admins', AdminSystemController::class); 
-Route::resource('user', UserController::class);  
+Route::apiResource('admins', AdminSystemController::class);
+Route::get('/professors', [ProfessorController::class, 'index']); 
 Route::resource('feedback', FeedbackController::class);  
 Route::resource('course', CourseController::class);  
 Route::resource('professor', ProfessorController::class);  
