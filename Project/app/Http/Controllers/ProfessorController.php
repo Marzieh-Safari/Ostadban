@@ -7,10 +7,28 @@ use Illuminate\Http\Request;
 
 class ProfessorController extends Controller
 {
-    // نمایش لیست اساتید
-    public function index()
+    // نمایش لیست اساتید (برای وب و API)
+    public function index(Request $request)
     {
-        $professors = Professor::all();
+        // جست‌وجو و مرتب‌سازی
+        $query = Professor::query();
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('sort')) {
+            $query->orderBy($request->sort, $request->get('direction', 'asc'));
+        }
+
+        $professors = $query->get();
+
+        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+        if ($request->expectsJson()) {
+            return response()->json($professors, 200);
+        }
+
+        // اگر درخواست از وب باشد، ویو را بازگردانید
         return view('professors.index', compact('professors'));
     }
 
@@ -34,9 +52,15 @@ class ProfessorController extends Controller
         return redirect()->route('professors.index')->with('success', 'Professor created successfully.');
     }
 
-    // نمایش جزئیات یک استاد
-    public function show(Professor $professor)
+    // نمایش جزئیات یک استاد (برای وب و API)
+    public function show(Professor $professor, Request $request)
     {
+        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+        if ($request->expectsJson()) {
+            return response()->json($professor, 200);
+        }
+
+        // اگر درخواست از وب باشد، ویو را بازگردانید
         return view('professors.show', compact('professor'));
     }
 
@@ -65,5 +89,13 @@ class ProfessorController extends Controller
     {
         $professor->delete();
         return redirect()->route('professors.index')->with('success', 'Professor deleted successfully.');
+    }
+
+    // نمایش لیست اساتید برای مهمان‌ها (API)
+    public function guestIndex()
+    {
+        // فقط لیست اساتید را بازگردانید
+        $professors = Professor::all();
+        return response()->json($professors, 200);
     }
 }
