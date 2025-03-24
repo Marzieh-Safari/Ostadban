@@ -98,4 +98,19 @@ class ProfessorController extends Controller
         $professors = Professor::all();
         return response()->json($professors, 200);
     }
+
+    // نمایش جزئیات یک استاد مشخص برای مهمان (API)
+    public function guestShow($id)
+    {
+        // تلاش برای یافتن استاد با شناسه مشخص
+        $professor = Professor::find($id);
+
+        // اگر استاد پیدا نشد، خطای 404 بازگردانده شود
+        if (!$professor) {
+            return response()->json(['error' => 'Professor not found'], 404);
+        }
+
+        // بازگرداندن اطلاعات استاد در قالب JSON
+        return response()->json($professor, 200);
+    }
 }

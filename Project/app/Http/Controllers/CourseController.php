@@ -8,10 +8,17 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    // نمایش لیست دوره‌ها
-    public function index()
+    // نمایش لیست دوره‌ها (برای وب و API)
+    public function index(Request $request)
     {
-        $courses = Course::all();
+        $courses = Course::with('professor')->get(); // همراه با اطلاعات استاد
+
+        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+        if ($request->expectsJson()) {
+            return response()->json($courses, 200);
+        }
+
+        // اگر درخواست از وب باشد، ویو را بازگردانید
         return view('courses.index', compact('courses'));
     }
 
@@ -36,9 +43,17 @@ class CourseController extends Controller
         return redirect()->route('courses.index')->with('success', 'Course created successfully.');
     }
 
-    // نمایش جزئیات یک دوره
-    public function show(Course $course)
+    // نمایش جزئیات یک دوره (برای وب و API)
+    public function show(Course $course, Request $request)
     {
+        $course->load('professor'); // بارگذاری اطلاعات استاد مرتبط
+
+        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+        if ($request->expectsJson()) {
+            return response()->json($course, 200);
+        }
+
+        // اگر درخواست از وب باشد، ویو را بازگردانید
         return view('courses.show', compact('course'));
     }
 
@@ -68,5 +83,12 @@ class CourseController extends Controller
     {
         $course->delete();
         return redirect()->route('courses.index')->with('success', 'Course deleted successfully.');
+    }
+
+    // نمایش لیست دوره‌ها برای مهمان‌ها (API)
+    public function guestIndex()
+    {
+        $courses = Course::with('professor')->get(); // همراه با اطلاعات استاد
+        return response()->json($courses, 200); // بازگرداندن داده‌ها در قالب JSON
     }
 }
