@@ -12,6 +12,7 @@ class CreateStudentsTable extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id(); // شناسه اصلی
             $table->string('name'); // نام دانشجو
+            $table->string('password');
             $table->string('email')->unique(); // ایمیل
             $table->string('phone')->nullable(); // شماره تلفن
             $table->string('major'); // رشته تحصیلی
