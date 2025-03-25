@@ -9,7 +9,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminSystemController;
 
 
-
+Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedbacks/guest', [FeedbackController::class, 'guestIndex']);
 Route::get('/courses/guest', [CourseController::class, 'guestIndex']);
 Route::get('/courses/guest/{id}', [CourseController::class, 'guestShow']);

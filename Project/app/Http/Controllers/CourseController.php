@@ -104,4 +104,33 @@ class CourseController extends Controller
     // اگر درخواست از وب باشد، می‌توانید یک پیام خطا یا 404 برگردانید
     return response()->json(['error' => 'Unauthorized access'], 403);
     }
+
+// جستجوی کلی برای دوره‌ها و اساتید (API)
+    public function searchAll(Request $request)
+    {
+    $query = $request->input('query'); // دریافت کلمه کلیدی جستجو
+
+    // جستجو در دوره‌ها
+    $courses = Course::with('professor')
+        ->where('title', 'like', '%' . $query . '%')
+        ->orWhere('description', 'like', '%' . $query . '%')
+        ->get();
+
+    // جستجو در اساتید
+    $professors = Professor::where('name', 'like', '%' . $query . '%')->get();
+
+    // ترکیب نتایج
+    $results = [
+        'courses' => $courses,
+        'professors' => $professors,
+    ];
+
+    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+    if ($request->expectsJson()) {
+        return response()->json($results, 200);
+    }
+
+    // اگر درخواست از وب باشد، می‌توانید یک ویو را بازگردانید
+    return view('search.results', compact('results'));
+    }
 }
