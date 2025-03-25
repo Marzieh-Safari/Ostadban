@@ -9,6 +9,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminSystemController;
 
 
+
+Route::get('/feedbacks/guest', [FeedbackController::class, 'guestIndex']);
 Route::get('/courses/guest', [CourseController::class, 'guestIndex']);
 Route::get('/courses/guest/{id}', [CourseController::class, 'guestShow']);
 Route::get('/api/guest/professors', [ProfessorController::class, 'guestIndex']);// نمایش لیست اساتید برای مهمان
