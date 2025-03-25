@@ -91,4 +91,17 @@ class CourseController extends Controller
         $courses = Course::with('professor')->get(); // همراه با اطلاعات استاد
         return response()->json($courses, 200); // بازگرداندن داده‌ها در قالب JSON
     }
+    // نمایش جزئیات یک دوره برای مهمان‌ها (API)
+    public function guestShow($id, Request $request)
+    {
+    $course = Course::with('professor')->findOrFail($id); // بارگذاری اطلاعات دوره و استاد مرتبط
+
+    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
+    if ($request->expectsJson()) {
+        return response()->json($course, 200);
+    }
+
+    // اگر درخواست از وب باشد، می‌توانید یک پیام خطا یا 404 برگردانید
+    return response()->json(['error' => 'Unauthorized access'], 403);
+    }
 }
