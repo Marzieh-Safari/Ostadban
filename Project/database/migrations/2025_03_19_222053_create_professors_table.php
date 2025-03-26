@@ -15,6 +15,7 @@ return new class extends Migration
         $table->id();
         $table->string('name');
         $table->string('password');
+        $table->string('professor_number');
         $table->string('department');
         $table->float('average_rating')->default(0);
         $table->timestamps();

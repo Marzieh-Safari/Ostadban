@@ -7,12 +7,14 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateStudentsTable extends Migration
 {
+
     public function up()
     {
         Schema::create('students', function (Blueprint $table) {
             $table->id(); // شناسه اصلی
             $table->string('name'); // نام دانشجو
             $table->string('password');
+            $table->string('student_number');
             $table->string('email')->unique(); // ایمیل
             $table->string('phone')->nullable(); // شماره تلفن
             $table->string('major'); // رشته تحصیلی
