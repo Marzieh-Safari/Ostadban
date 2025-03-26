@@ -10,5 +10,5 @@ class Student extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'phone', 'major']; // فیلدهای قابل پر شدن
+    protected $fillable = ['name', 'email', 'phone', 'major','password','id']; // فیلدهای قابل پر شدن
 }
