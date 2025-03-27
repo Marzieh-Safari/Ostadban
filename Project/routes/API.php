@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\UserController; 
+
 use Illuminate\Support\Facades\Route;   
 use App\Http\Controllers\FeedbackController;  
 use App\Http\Controllers\CourseController;  
@@ -9,7 +9,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminSystemController;
 use App\Models\Student;
 use App\Models\Professor;
-use Illuminate\Http\Request;
+
 
 Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedback/guest', [FeedbackController::class, 'guestIndex']);
