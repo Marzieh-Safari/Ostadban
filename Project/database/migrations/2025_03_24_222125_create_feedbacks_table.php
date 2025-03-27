@@ -14,10 +14,15 @@ return new class extends Migration
     Schema::create('feedbacks', function (Blueprint $table) {
         $table->id();
         $table->foreignId('student_id')->constrained()->onDelete('cascade');
-        $table->foreignId('faculty_number')->constrained()->onDelete('cascade');
+        $table->string('faculty_number'); // تعریف ستون faculty_number
+        $table->foreign('faculty_number')->references('faculty_number')->on('professors')->onDelete('cascade'); // اتصال به جدول professors
         $table->integer('rating');
         $table->text('comment')->nullable();
         $table->timestamps();
     });
+}
+    public function down()
+{
+    Schema::dropIfExists('professors');
 }
 };
