@@ -25,4 +25,5 @@ Route::resource('course', CourseController::class);
 Route::apiResource('student', StudentController::class);
 Route::apiResource('admin', AdminSystemController::class); 
 Route::resource('feedback', FeedbackController::class);  
-Route::resource('professor', ProfessorController::class);  
+Route::resource('professor', ProfessorController::class); 
+Route::get('/professors', [ProfessorController::class, 'index'])->name('professors.index'); 

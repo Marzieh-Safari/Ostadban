@@ -15,4 +15,9 @@ class Professor extends Model
     public function feedbacks() {
         return $this->hasMany(Feedback::class);
     }
+    public static function getSortedByRating()
+    {
+        // مرتب‌سازی اساتید بر اساس میانگین امتیاز از بهترین به بدترین
+        return self::orderBy('average_rating', 'desc')->get();
+    }
 }

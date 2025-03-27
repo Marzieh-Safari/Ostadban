@@ -12,6 +12,7 @@ class ProfessorController extends Controller
     {
         // جست‌وجو و مرتب‌سازی
         $query = Professor::query();
+        $professors = Professor::getSortedByRating();
 
         if ($request->has('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
