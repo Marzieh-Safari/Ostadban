@@ -11,22 +11,20 @@ class CourseController extends Controller
     // نمایش لیست دوره‌ها (برای وب و API)
     public function index(Request $request)
     {
-        $courses = Course::with('professor')->get(); // همراه با اطلاعات استاد
+        $course = Course::with('professor')->get(); // همراه با اطلاعات استاد
 
         // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
         if ($request->expectsJson()) {
-            return response()->json($courses, 200);
+            return response()->json($course, 200);
         }
 
-        // اگر درخواست از وب باشد، ویو را بازگردانید
-        return view('courses.index', compact('courses'));
     }
 
     // نمایش فرم ایجاد دوره جدید
     public function create()
     {
-        $professors = Professor::all();
-        return view('courses.create', compact('professors'));
+        $professor = Professor::all();
+        return view('course.create', compact('professor'));
     }
 
     // ذخیره دوره جدید در پایگاه داده
@@ -35,12 +33,12 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'professor_id' => 'required|exists:professors,id',
+            'faculty_number' => 'required|exists:professor,id',
         ]);
 
         Course::create($validated);
 
-        return redirect()->route('courses.index')->with('success', 'Course created successfully.');
+        return redirect()->route('course.index')->with('success', 'Course created successfully.');
     }
 
     // نمایش جزئیات یک دوره (برای وب و API)
@@ -53,15 +51,13 @@ class CourseController extends Controller
             return response()->json($course, 200);
         }
 
-        // اگر درخواست از وب باشد، ویو را بازگردانید
-        return view('courses.show', compact('course'));
     }
 
     // نمایش فرم ویرایش دوره
     public function edit(Course $course)
     {
-        $professors = Professor::all();
-        return view('courses.edit', compact('course', 'professors'));
+        $professor = Professor::all();
+        return view('course.edit', compact('course', 'professor'));
     }
 
     // به‌روزرسانی اطلاعات دوره
@@ -70,26 +66,26 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'professor_id' => 'required|exists:professors,id',
+            'faculty_number' => 'required|exists:professor,id',
         ]);
 
         $course->update($validated);
 
-        return redirect()->route('courses.index')->with('success', 'Course updated successfully.');
+        return redirect()->route('course.index')->with('success', 'Course updated successfully.');
     }
 
     // حذف دوره از پایگاه داده
     public function destroy(Course $course)
     {
         $course->delete();
-        return redirect()->route('courses.index')->with('success', 'Course deleted successfully.');
+        return redirect()->route('course.index')->with('success', 'Course deleted successfully.');
     }
 
     // نمایش لیست دوره‌ها برای مهمان‌ها (API)
     public function guestIndex()
     {
-        $courses = Course::with('professor')->get(); // همراه با اطلاعات استاد
-        return response()->json($courses, 200); // بازگرداندن داده‌ها در قالب JSON
+        $course = Course::with('professor')->get(); // همراه با اطلاعات استاد
+        return response()->json($course, 200); // بازگرداندن داده‌ها در قالب JSON
     }
     // نمایش جزئیات یک دوره برای مهمان‌ها (API)
     public function guestShow($id, Request $request)
@@ -111,18 +107,18 @@ class CourseController extends Controller
     $query = $request->input('query'); // دریافت کلمه کلیدی جستجو
 
     // جستجو در دوره‌ها
-    $courses = Course::with('professor')
+    $course = Course::with('professor')
         ->where('title', 'like', '%' . $query . '%')
         ->orWhere('description', 'like', '%' . $query . '%')
         ->get();
 
     // جستجو در اساتید
-    $professors = Professor::where('name', 'like', '%' . $query . '%')->get();
+    $professor = Professor::where('name', 'like', '%' . $query . '%')->get();
 
     // ترکیب نتایج
     $results = [
-        'courses' => $courses,
-        'professors' => $professors,
+        'course' => $course,
+        'professor' => $professor,
     ];
 
     // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
@@ -130,7 +126,5 @@ class CourseController extends Controller
         return response()->json($results, 200);
     }
 
-    // اگر درخواست از وب باشد، می‌توانید یک ویو را بازگردانید
-    return view('search.results', compact('results'));
     }
 }

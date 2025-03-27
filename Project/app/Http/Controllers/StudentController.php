@@ -17,7 +17,7 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students',
+            'email' => 'required|email|unique:student',
             'phone' => 'nullable|string',
             'major' => 'required|string|max:255',
         ]);
@@ -37,7 +37,7 @@ class StudentController extends Controller
         $student = Student::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,' . $id,
+            'email' => 'required|email|unique:student,email,' . $id,
             'phone' => 'nullable|string',
             'major' => 'required|string|max:255',
         ]);
