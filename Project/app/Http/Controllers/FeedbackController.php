@@ -42,7 +42,19 @@ class FeedbackController extends Controller
         return response()->json($feedback, 200);
     }
 
-    // اگر درخواست از وب باشد، ویو را بازگردانید
-    return view('feedback.index', compact('feedback'));
+    }
+
+    public function rateProfessor(Request $request, Professor $professor) {
+        $request->validate([
+            'rating' => 'required|integer|between:1,5',
+            'comment' => 'nullable|string'
+        ]);
+        
+        $rating = $professor->ratings()->updateOrCreate(
+            ['student_id' => $request->user()->id],
+            $request->only(['rating', 'comment'])
+        );
+        
+        return response()->json($rating);
     }
 }

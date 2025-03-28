@@ -16,7 +16,7 @@ return new class extends Migration
         $table->foreignId('student_id')->constrained()->onDelete('cascade');
         $table->string('faculty_number'); // تعریف ستون faculty_number
         $table->foreign('faculty_number')->references('faculty_number')->on('professors')->onDelete('cascade'); // اتصال به جدول professors
-        $table->integer('rating');
+        $table->integer('rating')->between(1, 5);
         $table->text('comment')->nullable();
         $table->timestamps();
     });

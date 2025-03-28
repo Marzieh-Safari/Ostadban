@@ -31,4 +31,7 @@ class Professor extends Model
         // مرتب‌سازی اساتید بر اساس میانگین امتیاز از بهترین به بدترین
         return self::orderBy('average_rating', 'desc')->get();
     }
+    public function getAverageRatingAttribute() {
+        return $this->ratings()->avg('rating');
+    }
 }
