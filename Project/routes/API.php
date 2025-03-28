@@ -11,6 +11,8 @@ use App\Models\Student;
 use App\Models\Professor;
 
 
+
+Route::get('/professors/most-searched', [ProfessorController::class, 'mostSearched']);
 Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedback/guest', [FeedbackController::class, 'guestIndex']);
 Route::get('/courses/guest', [CourseController::class, 'guestIndex']);

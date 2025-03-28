@@ -7,6 +7,27 @@ use Illuminate\Http\Request;
 
 class ProfessorController extends Controller
 {
+    public function search(Request $request)
+    {
+        $professor = Professor::where('name', 'LIKE', '%' . $request->query('name') . '%')->first();
+    
+        if ($professor) {
+        // افزایش مقدار search_count
+            $professor->increment('search_count'); // معادل $professor->search_count += 1;
+            $professor->save();
+        }
+
+    }
+
+    // app/Http/Controllers/ProfessorController.php
+
+    public function mostSearched()
+    {
+        $professor = Professor::getMostSearchedLastMonth();
+        return view('professors.most_searched', compact('professors'));
+    }
+
+
     // نمایش لیست اساتید (برای وب و API)
     public function index(Request $request)
     {
@@ -29,8 +50,6 @@ class ProfessorController extends Controller
             return response()->json($professor, 200);
         }
 
-        // اگر درخواست از وب باشد، ویو را بازگردانید
-        return view('professor.index', compact('professor'));
     }
 
     // نمایش فرم ایجاد استاد جدید
@@ -62,8 +81,6 @@ class ProfessorController extends Controller
             return response()->json($professor, 200);
         }
 
-        // اگر درخواست از وب باشد، ویو را بازگردانید
-        return view('professor.show', compact('professor'));
     }
 
     // نمایش فرم ویرایش استاد
