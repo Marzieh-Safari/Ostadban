@@ -19,11 +19,11 @@ class Professor extends Model
                     ->take($limit)
                     ->get();
     }
-    public function courses() {
+    public function course() {
         return $this->hasMany(Course::class);
     }
 
-    public function feedbacks() {
+    public function feedback() {
         return $this->hasMany(Feedback::class);
     }
     public static function getSortedByRating()

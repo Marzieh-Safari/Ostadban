@@ -12,11 +12,11 @@ use App\Models\Professor;
 
 
 
-Route::get('/professors/most-searched', [ProfessorController::class, 'mostSearched']);
+Route::get('/professor/most-searched', [ProfessorController::class, 'mostSearched']);
 Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedback/guest', [FeedbackController::class, 'guestIndex']);
-Route::get('/courses/guest', [CourseController::class, 'guestIndex']);
-Route::get('/courses/guest/{id}', [CourseController::class, 'guestShow']);
+Route::get('/course/guest', [CourseController::class, 'guestIndex']);
+Route::get('/course/guest/{id}', [CourseController::class, 'guestShow']);
 Route::get('/api/guest/professor', [ProfessorController::class, 'guestIndex']);// نمایش لیست اساتید برای مهمان
 Route::get('/api/guest/professor/{id}', [ProfessorController::class, 'guestShow']);// نمایش اطلاعات یک استاد مشخص برای مهمان
 Route::get('/professor', [ProfessorController::class, 'index']);
@@ -28,4 +28,4 @@ Route::apiResource('student', StudentController::class);
 Route::apiResource('admin', AdminSystemController::class); 
 Route::resource('feedback', FeedbackController::class);  
 Route::resource('professor', ProfessorController::class); 
-Route::get('/professors', [ProfessorController::class, 'index'])->name('professors.index'); 
+Route::get('/professor', [ProfessorController::class, 'index'])->name('professors.index'); 

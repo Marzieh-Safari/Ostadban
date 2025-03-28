@@ -24,7 +24,7 @@ class ProfessorController extends Controller
     public function mostSearched()
     {
         $professor = Professor::getMostSearchedLastMonth();
-        return view('professors.most_searched', compact('professors'));
+        return view('professor.most_searched', compact('professor'));
     }
 
 
@@ -33,7 +33,7 @@ class ProfessorController extends Controller
     {
         // جست‌وجو و مرتب‌سازی
         $query = Professor::query();
-        $professors = Professor::getSortedByRating();
+        $professor = Professor::getSortedByRating();
 
         if ($request->has('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');

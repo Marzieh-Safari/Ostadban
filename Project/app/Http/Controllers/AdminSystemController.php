@@ -35,7 +35,7 @@ class AdminSystemController extends Controller
     {
         $admin = AdminSystem::findOrFail($id);
         $validated = $request->validate([
-            'username' => 'required|string|max:255|unique:admin_systems,username,' . $id,
+            'username' => 'required|string|max:255|unique:admin_system,username,' . $id,
             'email' => 'required|email|unique:admin_systems,email,' . $id,
             'password' => 'nullable|string|min:8',
         ]);

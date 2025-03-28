@@ -20,7 +20,7 @@ class FeedbackController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'student_id' => 'required|exists:student,id',
             'faculty_number' => 'required|exists:professor,id',
             'course_id' => 'required|exists:course,id',
             'rating' => 'required|integer|min:1|max:5',
