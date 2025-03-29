@@ -5,126 +5,223 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Professor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Database\Eloquent\Collection;
 
 class CourseController extends Controller
 {
-    // نمایش لیست دوره‌ها (برای وب و API)
+    const CACHE_TTL = 3600; // 1 hour in seconds
+    const CACHE_PREFIX = 'api.course.';
+    const SEARCH_CACHE_PREFIX = 'api.search.course.';
+
+    /**
+     * نمایش لیست دوره‌ها
+     */
     public function index(Request $request)
     {
-        $course = Course::with('professor')->get(); // همراه با اطلاعات استاد
+        $cacheKey = $this->buildCacheKey('index', $request);
+        
+        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
+            $query = Course::with('professor');
+            
+            if ($request->has('professor_id')) {
+                $query->where('faculty_number', $request->professor_id);
+            }
+            
+            if ($request->has('sort_by')) {
+                $direction = $request->get('sort_dir', 'asc');
+                $query->orderBy($request->sort_by, $direction);
+            } else {
+                $query->orderBy('title');
+            }
+            
+            return $query->get();
+        });
 
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        if ($request->expectsJson()) {
-            return response()->json($course, 200);
-        }
-
+        return response()->json([
+            'data' => $courses,
+            'meta' => [
+                'cached' => true,
+                'cache_key' => $cacheKey,
+                'expires_in' => self::CACHE_TTL . ' seconds'
+            ]
+        ]);
     }
 
-    // نمایش فرم ایجاد دوره جدید
-    public function create()
+    /**
+     * نمایش جزئیات دوره
+     */
+    public function show($id)
     {
-        $professor = Professor::all();
-        return view('course.create', compact('professor'));
+        $cacheKey = self::CACHE_PREFIX . 'show.' . $id;
+        
+        $course = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($id) {
+            return Course::with(['professor', 'prerequisite'])
+                ->withCount(['enrollment', 'review'])
+                ->withAvg('review', 'rating')
+                ->findOrFail($id);
+        });
+
+        return response()->json([
+            'data' => $course,
+            'meta' => [
+                'cached' => true,
+                'expires_at' => now()->addSeconds(self::CACHE_TTL)->toDateTimeString()
+            ]
+        ]);
     }
 
-    // ذخیره دوره جدید در پایگاه داده
+    /**
+     * ایجاد دوره جدید
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = $this->validateCourseRequest($request);
+        $course = Course::create($validated);
+        $this->clearRelatedCaches($course);
+
+        return response()->json([
+            'data' => $course,
+            'message' => 'Course created successfully'
+        ], 201);
+    }
+
+    /**
+     * به‌روزرسانی دوره
+     */
+    public function update(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+        $validated = $this->validateCourseRequest($request, $id);
+        $course->update($validated);
+        $this->clearRelatedCaches($course);
+
+        return response()->json([
+            'data' => $course,
+            'message' => 'Course updated successfully'
+        ]);
+    }
+
+    /**
+     * حذف دوره
+     */
+    public function destroy($id)
+    {
+        $course = Course::findOrFail($id);
+        $course->delete();
+        $this->clearRelatedCaches($course);
+
+        return response()->json(null, 204);
+    }
+
+    /**
+     * جستجوی دوره‌ها
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+        $cacheKey = self::SEARCH_CACHE_PREFIX . md5($query);
+        
+        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($query) {
+            return Course::with('professor')
+                ->where(function($q) use ($query) {
+                    $q->where('title', 'like', "%{$query}%")
+                      ->orWhere('description', 'like', "%{$query}%")
+                      ->orWhere('code', 'like', "%{$query}%");
+                })
+                ->limit(15)
+                ->get();
+        });
+
+        return response()->json([
+            'data' => $courses,
+            'meta' => ['cached' => true]
+        ]);
+    }
+
+    /**
+     * نمایش دوره‌های محبوب
+     */
+    public function popular()
+    {
+        $cacheKey = self::CACHE_PREFIX . 'popular';
+        
+        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return Course::with('professor')
+                ->withCount('enrollment')
+                ->orderBy('enrollment_count', 'desc')
+                ->limit(5)
+                ->get();
+        });
+
+        return response()->json([
+            'data' => $courses,
+            'meta' => ['cached' => true]
+        ]);
+    }
+
+    // ==================== روش‌های کمکی ====================
+
+    protected function validateCourseRequest(Request $request, $id = null)
+    {
+        return $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'faculty_number' => 'required|exists:professor,id',
+            'code' => 'required|unique:course,code,' . $id,
+            'credit' => 'required|integer|min:1|max:6',
+            'is_public' => 'sometimes|boolean'
         ]);
-
-        Course::create($validated);
-
-        return redirect()->route('course.index')->with('success', 'Course created successfully.');
     }
 
-    // نمایش جزئیات یک دوره (برای وب و API)
-    public function show(Course $course, Request $request)
+    protected function buildCacheKey($method, $request)
     {
-        $course->load('professor'); // بارگذاری اطلاعات استاد مرتبط
-
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        if ($request->expectsJson()) {
-            return response()->json($course, 200);
+        $key = self::CACHE_PREFIX . $method;
+        
+        if ($request->hasAny(['professor_id', 'sort_by', 'sort_dir'])) {
+            $key .= '.' . md5(serialize($request->all()));
         }
 
+        return $key;
     }
 
-    // نمایش فرم ویرایش دوره
-    public function edit(Course $course)
+    protected function clearRelatedCaches($course)
     {
-        $professor = Professor::all();
-        return view('course.edit', compact('course', 'professor'));
+        if ($course instanceof Collection) {
+            foreach ($course as $c) {
+                $this->clearSingleCourseCache($c);
+            }
+        } else {
+            $this->clearSingleCourseCache($course);
+        }
+        
+        $this->clearListCaches();
+        $this->clearSearchCaches();
     }
 
-    // به‌روزرسانی اطلاعات دوره
-    public function update(Request $request, Course $course)
+    protected function clearSingleCourseCache(Course $course)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'faculty_number' => 'required|exists:professor,id',
-        ]);
-
-        $course->update($validated);
-
-        return redirect()->route('course.index')->with('success', 'Course updated successfully.');
+        Cache::forget(self::CACHE_PREFIX . 'show.' . $course->id);
+        Cache::forget('api.professor.' . $course->faculty_number);
     }
 
-    // حذف دوره از پایگاه داده
-    public function destroy(Course $course)
+    protected function clearListCaches()
     {
-        $course->delete();
-        return redirect()->route('course.index')->with('success', 'Course deleted successfully.');
+        Cache::forget(self::CACHE_PREFIX . 'index');
+        Cache::forget(self::CACHE_PREFIX . 'popular');
     }
 
-    // نمایش لیست دوره‌ها برای مهمان‌ها (API)
-    public function guestIndex()
+    protected function clearSearchCaches()
     {
-        $course = Course::with('professor')->get(); // همراه با اطلاعات استاد
-        return response()->json($course, 200); // بازگرداندن داده‌ها در قالب JSON
-    }
-    // نمایش جزئیات یک دوره برای مهمان‌ها (API)
-    public function guestShow($id, Request $request)
-    {
-    $course = Course::with('professor')->findOrFail($id); // بارگذاری اطلاعات دوره و استاد مرتبط
-
-    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-    if ($request->expectsJson()) {
-        return response()->json($course, 200);
-    }
-
-    // اگر درخواست از وب باشد، می‌توانید یک پیام خطا یا 404 برگردانید
-    return response()->json(['error' => 'Unauthorized access'], 403);
-    }
-
-// جستجوی کلی برای دوره‌ها و اساتید (API)
-    public function searchAll(Request $request)
-    {
-    $query = $request->input('query'); // دریافت کلمه کلیدی جستجو
-
-    // جستجو در دوره‌ها
-    $course = Course::with('professor')
-        ->where('title', 'like', '%' . $query . '%')
-        ->orWhere('description', 'like', '%' . $query . '%')
-        ->get();
-
-    // جستجو در اساتید
-    $professor = Professor::where('name', 'like', '%' . $query . '%')->get();
-
-    // ترکیب نتایج
-    $results = [
-        'course' => $course,
-        'professor' => $professor,
-    ];
-
-    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-    if ($request->expectsJson()) {
-        return response()->json($results, 200);
-    }
-
+        if (config('cache.default') === 'redis') {
+            $redis = Redis::connection(config('cache.stores.redis.connection'));
+            $keys = $redis->command('keys', [self::SEARCH_CACHE_PREFIX . '*']);
+            
+            foreach ($keys as $key) {
+                $cleanKey = str_replace(config('database.redis.options.prefix'), '', $key);
+                Cache::forget($cleanKey);
+            }
+        }
     }
 }
