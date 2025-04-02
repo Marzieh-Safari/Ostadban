@@ -9,12 +9,6 @@ use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
 {
-    // نمایش لیست نظرات
-    public function index()
-    {
-        $feedback = Feedback::all();
-        return view('feedback.index', compact('feedback'));
-    }
 
     // ذخیره نظر جدید در پایگاه داده
     public function store(Request $request)
@@ -33,7 +27,7 @@ class FeedbackController extends Controller
     } 
 
     // نمایش لیست نظرات برای مهمان‌ها (API)
-    public function guestIndex(Request $request)
+    public function Index(Request $request)
     {
     $feedback = Feedback::orderBy('created_at', 'asc')->with(['professor', 'course'])->get(); // مرتب‌سازی بر اساس تاریخ ایجاد و بارگذاری اطلاعات استاد و دوره
 

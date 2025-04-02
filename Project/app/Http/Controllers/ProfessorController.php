@@ -23,8 +23,19 @@ class ProfessorController extends Controller
 
     public function mostSearched()
     {
-        $professor = Professor::getMostSearchedLastMonth();
-        return view('professor.most_searched', compact('professor'));
+    try {
+        $professors = Professor::orderByDesc('search_count')
+                             ->limit(10)
+                             ->get(['id', 'name', 'search_count']);
+
+        return response()->json($professors);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Internal Server Error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
     }
 
 

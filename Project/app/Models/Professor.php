@@ -20,7 +20,7 @@ class Professor extends Model
                     ->get();
     }
     public function course() {
-        return $this->hasMany(Course::class);
+        return $this->hasMany(Course::class, 'faculty_number', 'id');
     }
 
     public function feedback() {
