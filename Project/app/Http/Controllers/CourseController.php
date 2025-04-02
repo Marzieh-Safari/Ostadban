@@ -22,11 +22,11 @@ class CourseController extends Controller
     {
         $cacheKey = $this->buildCacheKey('index', $request);
         
-        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
+        $course = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
             $query = Course::with('professor');
             
-            if ($request->has('professor_id')) {
-                $query->where('faculty_number', $request->professor_id);
+            if ($request->has('faculty_number')) {
+                $query->where('faculty_number', $request->faculty_number);
             }
             
             if ($request->has('sort_by')) {
@@ -40,7 +40,7 @@ class CourseController extends Controller
         });
 
         return response()->json([
-            'data' => $courses,
+            'data' => $course,
             'meta' => [
                 'cached' => true,
                 'cache_key' => $cacheKey,
@@ -123,7 +123,7 @@ class CourseController extends Controller
         $query = $request->input('query');
         $cacheKey = self::SEARCH_CACHE_PREFIX . md5($query);
         
-        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($query) {
+        $course = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($query) {
             return Course::with('professor')
                 ->where(function($q) use ($query) {
                     $q->where('title', 'like', "%{$query}%")
@@ -135,7 +135,7 @@ class CourseController extends Controller
         });
 
         return response()->json([
-            'data' => $courses,
+            'data' => $course,
             'meta' => ['cached' => true]
         ]);
     }
@@ -147,7 +147,7 @@ class CourseController extends Controller
     {
         $cacheKey = self::CACHE_PREFIX . 'popular';
         
-        $courses = Cache::remember($cacheKey, self::CACHE_TTL, function () {
+        $course = Cache::remember($cacheKey, self::CACHE_TTL, function () {
             return Course::with('professor')
                 ->withCount('enrollment')
                 ->orderBy('enrollment_count', 'desc')
@@ -156,7 +156,7 @@ class CourseController extends Controller
         });
 
         return response()->json([
-            'data' => $courses,
+            'data' => $course,
             'meta' => ['cached' => true]
         ]);
     }
@@ -179,7 +179,7 @@ class CourseController extends Controller
     {
         $key = self::CACHE_PREFIX . $method;
         
-        if ($request->hasAny(['professor_id', 'sort_by', 'sort_dir'])) {
+        if ($request->hasAny(['faculty_number', 'sort_by', 'sort_dir'])) {
             $key .= '.' . md5(serialize($request->all()));
         }
 

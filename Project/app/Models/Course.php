@@ -8,7 +8,9 @@ class Course extends Model
 {
     protected $fillable = ['title', 'description', 'professor_id'];
 
-    public function professor() {
-        return $this->belongsTo(Professor::class);
+    public function professor()
+    {
+    return $this->belongsTo(Professor::class, 'faculty_number', 'id');
     }
+
 }
