@@ -36,7 +36,7 @@ use App\Http\Controllers\RatingController;
 
 Route::get('/professor/most-searched', [ProfessorController::class, 'mostSearched']);
 Route::get('/search', [CourseController::class, 'searchAll']);
-Route::get('/feedback', [FeedbackController::class, 'guestIndex']);
+Route::get('/feedback', [FeedbackController::class, 'Index']);
 Route::get('/course/{id}', [CourseController::class, 'guestshow']);
 Route::get('/professor', [ProfessorController::class, 'guestIndex']);
 Route::get('/professor/{id}', [ProfessorController::class, 'guestShow']);
