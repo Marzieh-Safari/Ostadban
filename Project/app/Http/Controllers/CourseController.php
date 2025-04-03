@@ -85,13 +85,13 @@ class CourseController extends Controller
     public function guestIndex()
     {
         try {
-            $courses = Course::with(['professor' => function($query) {
+            $course = Course::with(['professor' => function($query) {
                 $query->select('id', 'name'); // فقط فیلدهای مورد نیاز
             }])->get(['id', 'title', 'description', 'faculty_number']);
     
             return response()->json([
                 'success' => true,
-                'data' => $courses
+                'data' => $course
             ], 200);
     
         } catch (\Exception $e) {
@@ -103,9 +103,9 @@ class CourseController extends Controller
         }
     }
     // نمایش جزئیات یک دوره برای مهمان‌ها (API)
-    public function guestShow($id, Request $request)
+    public function guestshow($id, Request $request)
     {
-    $course = Course::with('professor')->findOrFail($id); // بارگذاری اطلاعات دوره و استاد مرتبط
+        $course = Course::with('professor')->findOrFail($id); // بارگذاری اطلاعات دوره و استاد مرتبط
 
     // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
     if ($request->expectsJson()) {

@@ -24,11 +24,11 @@ class ProfessorController extends Controller
     public function mostSearched()
     {
     try {
-        $professors = Professor::orderByDesc('search_count')
+        $professor = Professor::orderByDesc('search_count')
                              ->limit(10)
                              ->get(['id', 'name', 'search_count']);
 
-        return response()->json($professors);
+        return response()->json($professor);
 
     } catch (\Exception $e) {
         return response()->json([

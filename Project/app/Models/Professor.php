@@ -19,7 +19,7 @@ class Professor extends Model
                     ->take($limit)
                     ->get();
     }
-    public function course() {
+    public function courses() {
         return $this->hasMany(Course::class, 'faculty_number', 'id');
     }
 

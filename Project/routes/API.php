@@ -34,19 +34,16 @@ use App\Http\Controllers\RatingController;
 //});
 
 
-Route::get('/api/professor/most-searched', [ProfessorController::class, 'mostSearched']);
-Route::get('/api/search', [CourseController::class, 'searchAll']);
-Route::get('/api/feedback', [FeedbackController::class, 'guestIndex']);
-Route::get('/api/course/{id}', [CourseController::class, 'show']);
-Route::get('/api/professor', [ProfessorController::class, 'index']);// نمایش لیست اساتید برای مهمان
-Route::get('/api/professor/{id}', [ProfessorController::class, 'show']);// نمایش اطلاعات یک استاد مشخص برای مهمان
-//Route::get('/professor', [ProfessorController::class, 'index']);
-//Route::get('/course/guest', [CourseController::class, 'guestIndex']);
-Route::get('/api/course', [CourseController::class, 'guestIndex']); // لیست دوره‌ها برای کاربران
-//Route::get('/api/course/{course}', [CourseController::class, 'show']); // جزئیات یک دوره خاص
-Route::resource('course', CourseController::class);
-Route::apiResource('student', StudentController::class);
-Route::apiResource('admin', AdminSystemController::class); 
-Route::resource('feedback', FeedbackController::class);  
-Route::resource('professor', ProfessorController::class); 
+Route::get('/professor/most-searched', [ProfessorController::class, 'mostSearched']);
+Route::get('/search', [CourseController::class, 'searchAll']);
+Route::get('/feedback', [FeedbackController::class, 'guestIndex']);
+Route::get('/course/{id}', [CourseController::class, 'guestshow']);
+Route::get('/professor', [ProfessorController::class, 'guestIndex']);
+Route::get('/professor/{id}', [ProfessorController::class, 'guestShow']);
+Route::get('/course', [CourseController::class, 'guestIndex']); // لیست دوره‌ها برای کاربران
+//Route::resource('course', CourseController::class);
+//Route::apiResource('student', StudentController::class);
+//Route::apiResource('admin', AdminSystemController::class); 
+//Route::resource('feedback', FeedbackController::class);  
+//Route::resource('professor', ProfessorController::class); 
 //Route::get('/api/professor', [ProfessorController::class, 'index'])->name('professor.index'); 
