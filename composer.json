@@ -1,5 +1,6 @@
 {
     "require": {
-        "predis/predis": "^2.3"
+        "predis/predis": "^2.3",
+        "laravel/folio": "*"
     }
 }
