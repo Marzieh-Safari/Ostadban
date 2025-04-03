@@ -13,7 +13,8 @@ return new class extends Migration
 {
     Schema::create('professors', function (Blueprint $table) {
         $table->id();
-        $table->string('name');
+        $table->string('full_name');
+        $table->string('username');
         $table->string('password');
         $table->string('faculty_number')->unique();
         $table->boolean('is_approved')->default(false);
