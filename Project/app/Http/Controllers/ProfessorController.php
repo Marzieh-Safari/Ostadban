@@ -147,7 +147,11 @@ class ProfessorController extends Controller
 
     public function guestIndex()
 {
-    $professors = Professor::all();
+    $professors = Professor::select('full_name', 'username', 'department', 'average_rating')
+        ->with('courses:id,title,faculty_number') // فقط فیلدهای مورد نیاز درس‌ها
+        ->orderBy('average_rating', 'desc')
+        ->get();
+
     return response()->json($professors);
 }
 }
