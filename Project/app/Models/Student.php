@@ -5,14 +5,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 // app/Models/Student.php
 
 class Student extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'phone', 'is_approved','password','student_number','major']; // فیلدهای قابل پر شدن
+    protected $fillable = ['name', 'email', 'phone', 'is_approved','password','student_number','major','verification_token','token_expires_at']; // فیلدهای قابل پر شدن
     // app/Models/Student.php
-    protected $hidden = ['password']; // مخفی کردن پسورد در پاسخ‌ها
-    protected $casts = ['is_approved' => 'boolean'];
+    protected $hidden = ['password','verification_token']; // مخفی کردن پسورد در پاسخ‌ها
+    protected $casts = ['is_approved' => 'boolean','token_expires_at' => 'datetime'];
+    public static function generateVerificationToken()
+    {
+        return Str::random(60);
+    }
 }

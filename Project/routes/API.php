@@ -12,6 +12,15 @@ use App\Models\Professor;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RatingController;
 
+use Illuminate\Http\Request;
+use App\Http\Controllers\Auth\StudentAuthController;
+
+Route::prefix('student')->group(function () {
+    Route::post('/register', [StudentAuthController::class, 'register']);
+    Route::post('/verify-email', [StudentAuthController::class, 'verify']);
+    Route::post('/login', [StudentAuthController::class, 'login']);
+});
+
 //Route::prefix('student')->group(function () {
     // احراز هویت
     //Route::post('/register', [AuthController::class, 'register']);

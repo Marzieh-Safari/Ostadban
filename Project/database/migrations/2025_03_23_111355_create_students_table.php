@@ -15,6 +15,8 @@ class CreateStudentsTable extends Migration
             $table->string('name'); // نام دانشجو
             $table->string('password');
             $table->string('student_number');
+            $table->string('verification_token')->nullable();
+            $table->timestamp('token_expires_at')->nullable();
             $table->boolean('is_approved')->default(false);
             $table->string('email')->unique(); // ایمیل
             $table->string('phone')->nullable(); // شماره تلفن
