@@ -11,15 +11,16 @@ class Course extends Model
     {
         parent::boot();
 
-        static::creating(function ($course) {
-            $course->slug = Str::slug($course->name);
+        static::creating(function ($courses) {
+            $courses->slug = Str::slug($courses->title);
         });
 
-        static::updating(function ($course) {
-            $course->slug = Str::slug($course->name);
+        static::updating(function ($courses) {
+            $courses->slug = Str::slug($courses->title);
         });
     }
-    protected $fillable = ['title', 'description', 'faculty_number'];
+    protected $table = 'courses';
+    protected $fillable = ['title', 'slug', 'faculty_number'];
 
     public function professor()
     {

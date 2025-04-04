@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Professor extends Model
 {
-    protected $fillable = ['name', 'department', 'average_rating','password','faculty_number','is_approved'];
-    
+    protected $fillable = ['full_name', 'department', 'average_rating','username'];
+    protected $table = 'professors';
 
 
     // app/Models/Professor.php
@@ -31,7 +31,7 @@ class Professor extends Model
         // مرتب‌سازی اساتید بر اساس میانگین امتیاز از بهترین به بدترین
         return self::orderBy('average_rating', 'desc')->get();
     }
-    public function getAverageRatingAttribute() {
-        return $this->ratings()->avg('rating');
-    }
+    //public function getAverageRatingAttribute() {
+        //return $this->ratings()->avg('rating');
+    //}
 }

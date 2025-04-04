@@ -121,26 +121,33 @@ class ProfessorController extends Controller
         return redirect()->route('professor.index')->with('success', 'Professor deleted successfully.');
     }
 
-    // نمایش لیست اساتید برای مهمان‌ها (API)
-    public function guestIndex()
-    {
-        // فقط لیست اساتید را بازگردانید
-        $professor = Professor::all();
-        return response()->json($professor, 200);
-    }
+    //نمایش لیست اساتید برای مهمان‌ها (API)
+    //public function guestIndex()
+//{
+    //فقط فیلدهای full_name و username را انتخاب کنید
+    //$professors = Professor::all();
+
+    //return response()->json($professors, 200);
+//}
 
     // نمایش جزئیات یک استاد مشخص برای مهمان (API)
     public function guestShow($id)
     {
-        // تلاش برای یافتن استاد با شناسه مشخص
-        $professor = Professor::find($id);
+    // تلاش برای یافتن استاد با شناسه مشخص
+    $professor = Professor::find($id);
 
-        // اگر استاد پیدا نشد، خطای 404 بازگردانده شود
-        if (!$professor) {
-            return response()->json(['error' => 'Professor not found'], 404);
-        }
-
-        // بازگرداندن اطلاعات استاد در قالب JSON
-        return response()->json($professor, 200);
+    // اگر استاد پیدا نشد، خطای 404 بازگردانده شود
+    if (!$professor) {
+        return response()->json(['error' => 'Professor not found'], 404);
     }
+
+    // بازگرداندن اطلاعات استاد در قالب JSON
+    return response()->json($professor, 200);
+    }
+
+    public function guestIndex()
+{
+    $professors = Professor::all();
+    return response()->json($professors);
+}
 }

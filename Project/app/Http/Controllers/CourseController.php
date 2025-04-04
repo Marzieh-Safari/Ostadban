@@ -84,23 +84,30 @@ class CourseController extends Controller
     // نمایش لیست دوره‌ها برای مهمان‌ها (API)
     public function guestIndex()
     {
-        try {
-            $course = Course::with(['professor' => function($query) {
-                $query->select('id', 'name'); // فقط فیلدهای مورد نیاز
-            }])->get(['id', 'title', 'description', 'faculty_number']);
-    
+    try {
+        // واکشی فقط فیلدهای title و slug از جدول courses
+        $course = Course::select('title', 'slug')->get();
+
+        // بررسی خالی بودن داده‌ها
+        if ($course->isEmpty()) {
             return response()->json([
                 'success' => true,
-                'data' => $course
+                'message' => 'No courses found.',
+                'data' => []
             ], 200);
-    
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Server Error',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        // بازگرداندن داده‌ها در قالب JSON
+        return response()->json($course, 200);
+
+    } catch (\Exception $e) {
+        // مدیریت خطاهای احتمالی
+        return response()->json([
+            'success' => false,
+            'message' => 'Server Error',
+            'error' => $e->getMessage()
+        ], 500);
+    }
     }
     // نمایش جزئیات یک دوره برای مهمان‌ها (API)
     public function guestshow($id, Request $request)
@@ -113,7 +120,7 @@ class CourseController extends Controller
     }
 
     // اگر درخواست از وب باشد، می‌توانید یک پیام خطا یا 404 برگردانید
-    return response()->json(['error' => 'Unauthorized access'], 403);
+    //return response()->json(['error' => 'Unauthorized access'], 403);
     }
 
 // جستجوی کلی برای دوره‌ها و اساتید (API)

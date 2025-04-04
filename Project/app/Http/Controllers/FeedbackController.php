@@ -29,11 +29,11 @@ class FeedbackController extends Controller
     // نمایش لیست نظرات برای مهمان‌ها (API)
     public function Index(Request $request)
     {
-    $feedback = Feedback::orderBy('created_at', 'asc')->with(['professor', 'course'])->get(); // مرتب‌سازی بر اساس تاریخ ایجاد و بارگذاری اطلاعات استاد و دوره
+    $feedbacks = Feedback::orderBy('created_at', 'asc')->with(['professor', 'course'])->get(); // مرتب‌سازی بر اساس تاریخ ایجاد و بارگذاری اطلاعات استاد و دوره
 
     // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
     if ($request->expectsJson()) {
-        return response()->json($feedback, 200);
+        return response()->json($feedbacks, 200);
     }
 
     }
