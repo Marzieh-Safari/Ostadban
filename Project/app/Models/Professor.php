@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Professor extends Model
 {
-    protected $fillable = ['full_name', 'department', 'average_rating','username'];
+    protected $fillable = ['full_name', 'department', 'average_rating','username','faculty_number'];
     protected $table = 'professors';
 
 
@@ -20,7 +20,7 @@ class Professor extends Model
                     ->get();
     }
     public function courses() {
-        return $this->hasMany(Course::class, 'faculty_number', 'id');
+        return $this->hasMany(Course::class, 'faculty_number', 'faculty_number');
     }
 
     public function feedback() {

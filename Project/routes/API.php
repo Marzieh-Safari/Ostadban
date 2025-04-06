@@ -15,11 +15,12 @@ use App\Http\Controllers\RatingController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\StudentAuthController;
 
-Route::prefix('student')->group(function () {
-    Route::post('/register', [StudentAuthController::class, 'register']);
-    Route::post('/verify-email', [StudentAuthController::class, 'verify']);
-    Route::post('/login', [StudentAuthController::class, 'login']);
-});
+// AuthController
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'profile']);
 
 //Route::prefix('student')->group(function () {
     // احراز هویت

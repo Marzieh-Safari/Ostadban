@@ -24,7 +24,7 @@ class Course extends Model
 
     public function professor()
     {
-    return $this->belongsTo(Professor::class, 'faculty_number', 'id');
+    return $this->belongsTo(Professor::class, 'faculty_number', 'faculty_number');
     }
 
 }

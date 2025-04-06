@@ -132,26 +132,66 @@ class ProfessorController extends Controller
 
     // نمایش جزئیات یک استاد مشخص برای مهمان (API)
     public function guestShow($id)
-    {
-    // تلاش برای یافتن استاد با شناسه مشخص
-    $professor = Professor::find($id);
+{
+    // یافتن استاد با روابط مرتبط
+    $professor = Professor::with(['courses' => function($query) {
+            $query->select('id', 'title', 'faculty_number');
+        }])
+        ->select('id', 'full_name', 'username', 'department', 'average_rating', 'faculty_number', 'created_at')
+        ->find($id);
 
-    // اگر استاد پیدا نشد، خطای 404 بازگردانده شود
+    // اگر استاد پیدا نشد
     if (!$professor) {
-        return response()->json(['error' => 'Professor not found'], 404);
+        return response()->json([
+            'success' => false,
+            'message' => 'استاد مورد نظر یافت نشد'
+        ], 404);
     }
 
-    // بازگرداندن اطلاعات استاد در قالب JSON
-    return response()->json($professor, 200);
-    }
+    // فرمت‌بندی پاسخ
+    $formattedCourses = $professor->courses->map(function($course) {
+        return [
+            'course_id' => $course->id,
+            'title' => $course->title,
+        ];
+    });
 
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'professor_id' => $professor->id,
+            'full_name' => $professor->full_name,
+            'username' => $professor->username,
+            'department' => $professor->department,
+            'average_rating' => $professor->average_rating,
+            'courses' => $formattedCourses,
+            'courses_count' => $professor->courses->count()
+        ],
+        'message' => 'اطلاعات استاد با موفقیت دریافت شد'
+    ]);
+}
     public function guestIndex()
 {
-    $professors = Professor::select('full_name', 'username', 'department', 'average_rating')
-        ->with('courses:id,title,faculty_number') // فقط فیلدهای مورد نیاز درس‌ها
+    return Professor::query()
+        ->with(['courses' => function($query) {
+            $query->select('id', 'title', 'faculty_number');
+        }])
         ->orderBy('average_rating', 'desc')
-        ->get();
-
-    return response()->json($professors);
+        ->get()
+        ->map(function($professor) {
+            return [
+                'id' => $professor->id,
+                'full_name' => $professor->full_name,
+                'username' => $professor->username,
+                'department' => $professor->department,
+                'average_rating' => $professor->average_rating,
+                'courses' => $professor->courses->map(function($course) {
+                    return [
+                        'id' => $course->id,
+                        'title' => $course->title
+                    ];
+                })
+            ];
+        });
 }
 }
