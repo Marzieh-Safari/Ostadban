@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Feedback extends Model
 {
-    protected $fillable = ['student_id', 'professor_id', 'rating', 'comment'];
+    protected $fillable = ['student_id', 'faculty_number', 'rating', 'comment'];
 
     protected $table = 'feedbacks';
     public function student() {

@@ -20,13 +20,12 @@ class AuthController extends Controller
         $validated['verification_token'] = Str::random(60);
         $validated['token_expires_at'] = now()->addHours(24);
         
-        $student = Student::create($validated);
+        $student = Student::create($validated);//ایجاد رکورد جدید در دیتابیس
         
         // ارسال ایمیل تأیید
         Mail::to($student->email)->send(new StudentVerificationMail($student));
         
         return response()->json([
-            'message' => 'ثبت‌نام موفق! لطفاً ایمیل خود را تأیید کنید.',
             'student' => $student
         ], 201);
     }

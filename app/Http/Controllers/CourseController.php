@@ -9,16 +9,16 @@ use Illuminate\Http\Request;
 class CourseController extends Controller
 {
     // نمایش لیست دوره‌ها (برای وب و API)
-    public function index(Request $request)
-    {
-        $course = Course::with('professor')->get(); // همراه با اطلاعات استاد
+    //public function index(Request $request)
+    //{
+        //$course = Course::with('professor')->get(); // همراه با اطلاعات استاد
 
         // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        if ($request->expectsJson()) {
-            return response()->json($course, 200);
-        }
+        //if ($request->expectsJson()) {
+            //return response()->json($course, 200);
+        //}
 
-    }
+    //}
 
     // نمایش فرم ایجاد دوره جدید
     public function create()
@@ -42,16 +42,16 @@ class CourseController extends Controller
     }
 
     // نمایش جزئیات یک دوره (برای وب و API)
-    public function show(Course $course, Request $request)
-    {
-        $course->load('professor'); // بارگذاری اطلاعات استاد مرتبط
+    //public function show(Course $course, Request $request)
+    //{
+        //$course->load('professor'); // بارگذاری اطلاعات استاد مرتبط
 
         // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        if ($request->expectsJson()) {
-            return response()->json($course, 200);
-        }
+        //if ($request->expectsJson()) {
+            //return response()->json($course, 200);
+        //}
 
-    }
+    //}
 
     // نمایش فرم ویرایش دوره
     public function edit(Course $course)

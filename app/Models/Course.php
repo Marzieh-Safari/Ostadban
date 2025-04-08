@@ -20,7 +20,7 @@ class Course extends Model
         });
     }
     protected $table = 'courses';
-    protected $fillable = ['title', 'slug', 'faculty_number'];
+    protected $fillable = ['title','description', 'slug', 'faculty_number'];
 
     public function professor()
     {

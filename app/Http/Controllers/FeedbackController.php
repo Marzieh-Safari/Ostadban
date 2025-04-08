@@ -26,7 +26,7 @@ class FeedbackController extends Controller
         return redirect()->route('feedback.index')->with('success', 'Feedback created successfully.');
     } 
 
-    // نمایش لیست نظرات برای مهمان‌ها (API)
+    //نمایش لیست نظرات (API)
     public function Index(Request $request)
     {
     $feedbacks = Feedback::orderBy('created_at', 'asc')->with(['professor', 'course'])->get(); // مرتب‌سازی بر اساس تاریخ ایجاد و بارگذاری اطلاعات استاد و دوره
