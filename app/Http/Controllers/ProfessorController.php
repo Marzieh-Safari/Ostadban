@@ -9,189 +9,144 @@ class ProfessorController extends Controller
 {
     public function search(Request $request)
     {
-        $professor = Professor::where('name', 'LIKE', '%' . $request->query('name') . '%')->first();
+        $professor = Professor::where('full_name', 'LIKE', '%' . $request->query('name') . '%')->first();
     
         if ($professor) {
-        // افزایش مقدار search_count
-            $professor->increment('search_count'); // معادل $professor->search_count += 1;
-            $professor->save();
+            $professor->increment('search_count');
+            return response()->json($professor);
         }
 
+        return response()->json(['message' => 'Professor not found'], 404);
     }
-
-    // app/Http/Controllers/ProfessorController.php
 
     public function mostSearched()
     {
-    try {
-        $professor = Professor::orderByDesc('search_count')
-                             ->limit(10)
-                             ->get(['id', 'name', 'search_count']);
+        try {
+            $professors = Professor::where('type', 'professor')
+                                ->orderByDesc('search_count')
+                                ->limit(10)
+                                ->get(['id', 'full_name', 'search_count']);
 
-        return response()->json($professor);
+            return response()->json($professors);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Internal Server Error',
-            'message' => $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-    }
 
-
-    // نمایش لیست اساتید (برای وب و API)
     public function index(Request $request)
     {
-        // جست‌وجو و مرتب‌سازی
-        $query = Professor::query();
-        $professor = Professor::getSortedByRating();
+        $query = Professor::where('type', 'professor');
+        $sortedByRating = Professor::getSortedByRating();
 
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('full_name', 'like', '%' . $request->search . '%');
         }
 
         if ($request->has('sort')) {
             $query->orderBy($request->sort, $request->get('direction', 'asc'));
         }
 
-        $professor = $query->get();
+        $professors = $query->get();
 
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
         if ($request->expectsJson()) {
-            return response()->json($professor, 200);
+            return response()->json([
+                'sorted_by_rating' => $sortedByRating,
+                'filtered_professors' => $professors
+            ], 200);
         }
-
     }
 
-    // نمایش فرم ایجاد استاد جدید
-    public function create()
-    {
-        return view('professor.create');
-    }
-
-    // ذخیره استاد جدید در پایگاه داده
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'full_name' => 'required|string|max:255',
             'department' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:professor',
-            'faculty_number'=>'required|string|max:255'
+            'email' => 'required|email|unique:users,email',
+            'faculty_number' => 'required|string|max:255|unique:users,faculty_number',
+            'password' => 'required|string|min:8'
         ]);
 
-        Professor::create($validated);
+        $professor = Professor::create(array_merge($validated, ['type' => 'professor']));
 
-        return redirect()->route('professor.index')->with('success', 'Professor created successfully.');
+        if ($request->expectsJson()) {
+            return response()->json($professor, 201);
+        }
     }
 
-    // نمایش جزئیات یک استاد (برای وب و API)
     public function show(Professor $professor, Request $request)
     {
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
         if ($request->expectsJson()) {
             return response()->json($professor, 200);
         }
-
     }
-
-    // نمایش فرم ویرایش استاد
-    public function edit(Professor $professor)
-    {
-        return view('professor.edit', compact('professor'));
-    }
-
-    // به‌روزرسانی اطلاعات استاد
-    public function update(Request $request, Professor $professor)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:professor,email,' . $professor->id,
-            'department' => 'nullable|string|max:255',
-        ]);
-
-        $professor->update($validated);
-
-        return redirect()->route('professor.index')->with('success', 'Professor updated successfully.');
-    }
-
-    // حذف استاد از پایگاه داده
-    public function destroy(Professor $professor)
-    {
-        $professor->delete();
-        return redirect()->route('professor.index')->with('success', 'Professor deleted successfully.');
-    }
-
-    //نمایش لیست اساتید برای مهمان‌ها (API)
-    //public function guestIndex()
-//{
-    //فقط فیلدهای full_name و username را انتخاب کنید
-    //$professors = Professor::all();
-
-    //return response()->json($professors, 200);
-//}
-
-    // نمایش جزئیات یک استاد مشخص برای مهمان (API)
     public function guestShow($id)
-{
-    // یافتن استاد با روابط مرتبط
-    $professor = Professor::with(['courses' => function($query) {
-            $query->select('id', 'title', 'faculty_number');
-        }])
-        ->select('id', 'full_name', 'username', 'department', 'average_rating', 'faculty_number', 'created_at')
-        ->find($id);
-
-    // اگر استاد پیدا نشد
-    if (!$professor) {
-        return response()->json([
-            'success' => false,
-            'message' => 'استاد مورد نظر یافت نشد'
-        ], 404);
-    }
-
-    // فرمت‌بندی پاسخ
-    $formattedCourses = $professor->courses->map(function($course) {
-        return [
-            'course_id' => $course->id,
-            'title' => $course->title,
-        ];
-    });
-
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'professor_id' => $professor->id,
-            'full_name' => $professor->full_name,
-            'username' => $professor->username,
-            'department' => $professor->department,
-            'average_rating' => $professor->average_rating,
-            'courses' => $formattedCourses,
-            'courses_count' => $professor->courses->count()
-        ],
-        'message' => 'اطلاعات استاد با موفقیت دریافت شد'
-    ]);
-}
-    public function guestIndex()
-{
-    return Professor::query()
-        ->with(['courses' => function($query) {
-            $query->select('id', 'title', 'faculty_number');
-        }])
-        ->orderBy('average_rating', 'desc')
-        ->get()
-        ->map(function($professor) {
+    {
+        // یافتن استاد با روابط مرتبط + فیلتر type
+        $professor = Professor::where('type', 'professor')
+            ->with(['courses' => function($query) {
+                $query->select('id', 'title', 'faculty_number');
+            }])
+            ->select('id', 'full_name', 'username', 'department', 'average_rating', 'faculty_number', 'created_at')
+            ->find($id);
+    
+        // اگر استاد پیدا نشد
+        if (!$professor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'استاد مورد نظر یافت نشد'
+            ], 404);
+        }
+    
+        // فرمت‌بندی پاسخ
+        $formattedCourses = $professor->courses->map(function($course) {
             return [
-                'id' => $professor->id,
+                'course_id' => $course->id,
+                'title' => $course->title,
+            ];
+        });
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'professor_id' => $professor->id,
                 'full_name' => $professor->full_name,
                 'username' => $professor->username,
                 'department' => $professor->department,
                 'average_rating' => $professor->average_rating,
-                'courses' => $professor->courses->map(function($course) {
-                    return [
-                        'id' => $course->id,
-                        'title' => $course->title
-                    ];
-                })
-            ];
-        });
-}
+                'courses' => $formattedCourses,
+                'courses_count' => $professor->courses->count()
+            ],
+            'message' => 'اطلاعات استاد با موفقیت دریافت شد'
+        ]);
+    }
+    public function guestIndex()
+    {
+        $professors = Professor::where('type', 'professor')
+            ->with(['courses' => function($query) {
+                $query->select('id', 'title', 'faculty_number');
+            }])
+            ->orderBy('average_rating', 'desc')
+            ->get()
+            ->map(function($professor) {
+                return [
+                    'id' => $professor->id,
+                    'full_name' => $professor->full_name,
+                    'username' => $professor->username,
+                    'department' => $professor->department,
+                    'average_rating' => $professor->average_rating,
+                    'courses' => $professor->courses->map(function($course) {
+                        return [
+                            'id' => $course->id,
+                            'title' => $course->title
+                        ];
+                    })
+                ];
+            });
+
+        return response()->json($professors);
+    }
 }

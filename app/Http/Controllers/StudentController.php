@@ -17,20 +17,34 @@ class StudentController extends Controller
 
     public function index()
     {
-        return Student::where('is_approved', true)->get();
+        return Student::where('type', 'student')
+            ->where('is_approved', true)
+            ->get();
     }
 
     public function show($id)
     {
-        return Student::findOrFail($id);
+        return Student::where('type', 'student')
+            ->findOrFail($id);
     }
 
     public function updateProfile(UpdateProfileRequest $request)
     {
         $student = $request->user();
-        $student->update($request->validated());
+        $data = $request->validated();
         
-        return response()->json($student);
+        // جلوگیری از تغییر type
+        if (isset($data['type'])) {
+            unset($data['type']);
+        }
+        
+        $student->update($data);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $student,
+            'message' => 'پروفایل با موفقیت بروزرسانی شد'
+        ]);
     }
 
     public function changePassword(Request $request)
@@ -43,27 +57,43 @@ class StudentController extends Controller
         $student = $request->user();
         
         if (!Hash::check($request->current_password, $student->password)) {
-            return response()->json(['message' => 'رمز عبور فعلی نادرست است'], 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'رمز عبور فعلی نادرست است'
+            ], 400);
         }
         
         $student->update(['password' => Hash::make($request->new_password)]);
         
-        return response()->json(['message' => 'رمز عبور با موفقیت تغییر یافت']);
+        return response()->json([
+            'success' => true,
+            'message' => 'رمز عبور با موفقیت تغییر یافت'
+        ]);
     }
 
     public function approve($id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('type', 'student')
+            ->findOrFail($id);
+            
         $student->update(['is_approved' => true]);
         
-        return response()->json(['message' => 'دانشجو تأیید شد']);
+        return response()->json([
+            'success' => true,
+            'message' => 'دانشجو تأیید شد'
+        ]);
     }
 
     public function disapprove($id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('type', 'student')
+            ->findOrFail($id);
+            
         $student->update(['is_approved' => false]);
         
-        return response()->json(['message' => 'دانشجو رد شد']);
+        return response()->json([
+            'success' => true,
+            'message' => 'دانشجو رد شد'
+        ]);
     }
 }

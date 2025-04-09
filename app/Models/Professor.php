@@ -2,37 +2,83 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Professor extends Model
+class Professor extends Authenticatable
 {
-    protected $fillable = ['full_name', 'department', 'average_rating','username','faculty_number'];
-    protected $table = 'professors';
+    use Notifiable;
 
+    protected $fillable = [
+        'full_name', // حفظ همان فیلد قبلی
+        'department',
+        'average_rating',
+        'username',
+        'faculty_number',
+        'type',
+        'email', 
+        'password',
+        'email_verified_at',
+        'search_count' // اضافه شده در صورت نیاز
+    ];
 
-    // app/Models/Professor.php
+    protected $hidden = [
+        'password',
+        'remember_token'
+    ];
 
-    public static function getMostSearchedLastMonth($limit = 10)
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'average_rating' => 'float'
+    ];
+
+    protected static function boot()
     {
-        return self::orderBy('search_count', 'desc')
-                    ->where('updated_at', '>=', now()->subDays(30)) // فقط رکوردهای ۳۰ روز گذشته
-                    ->take($limit)
-                    ->get();
+        parent::boot();
+
+        static::creating(function ($professor) {
+            $professor->type = 'professor';
+        });
     }
-    public function courses() {
+
+    public function courses()
+    {
         return $this->hasMany(Course::class, 'faculty_number', 'faculty_number');
     }
 
-    public function feedback() {
-        return $this->hasMany(Feedback::class);
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class, 'professor_id');
     }
+
+    public static function getMostSearchedLastMonth($limit = 10)
+    {
+        return self::where('type', 'professor')
+            ->orderBy('search_count', 'desc')
+            ->where('updated_at', '>=', now()->subDays(30))
+            ->take($limit)
+            ->get();
+    }
+
     public static function getSortedByRating()
     {
-    return self::with('courses') // بارگذاری همراه با درس‌ها
-        ->orderBy('average_rating', 'desc')
-        ->get();
+        return self::where('type', 'professor')
+            ->with('courses')
+            ->orderBy('average_rating', 'desc')
+            ->get();
     }
-    //public function getAverageRatingAttribute() {
-        //return $this->ratings()->avg('rating');
-    //}
+
+    // اکسسور برای تطابق با انتظارات لاراول (اختیاری)
+    public function getNameAttribute()
+    {
+        return $this->attributes['full_name'];
+    }
+
+    // برای محاسبه میانگین رتبه
+    public function calculateAverageRating()
+    {
+        $this->average_rating = $this->feedback()->avg('rating');
+        $this->save();
+        return $this->average_rating;
+    }
 }

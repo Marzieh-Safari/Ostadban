@@ -10,6 +10,7 @@ class AdminSystemController extends Controller
 {
     public function index()
     {
+        $Admin = AdminSystem::where('type', 'admin');
         return AdminSystem::all(); // نمایش تمام ادمین‌ها
     }
 
@@ -27,12 +28,14 @@ class AdminSystemController extends Controller
 
     public function show($id)
     {
+        $Admin = AdminSystem::where('type', 'admin');
         $admin = AdminSystem::findOrFail($id);
         return response()->json($admin); // نمایش ادمین خاص
     }
 
     public function update(Request $request, $id)
     {
+        $Admin = AdminSystem::where('type', 'admin');
         $admin = AdminSystem::findOrFail($id);
         $validated = $request->validate([
             'username' => 'required|string|max:255|unique:admin_system,username,' . $id,
@@ -46,6 +49,7 @@ class AdminSystemController extends Controller
 
     public function destroy($id)
     {
+        $Admin = AdminSystem::where('type', 'admin');
         $admin = AdminSystem::findOrFail($id);
         $admin->delete();
         return response()->json(['message' => 'Admin deleted']); // حذف ادمین
