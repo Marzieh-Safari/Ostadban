@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit88970a0117c062eed55fa8728fc43833
+class ComposerStaticInit7d2a70db79de725529cb25516453a43a
 {
     public static $files = array (
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
@@ -537,6 +537,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Http\\Requests\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/LoginRequest.php',
         'App\\Http\\Requests\\RegisterStudentRequest' => __DIR__ . '/../..' . '/app/Http/Requests/RegisterStudentRequest.php',
         'App\\Http\\Requests\\UpdateProfileRequest' => __DIR__ . '/../..' . '/app/Http/Requests/UpdateProfileRequest.php',
+        'App\\Mail\\StudentVerificationMail' => __DIR__ . '/../..' . '/app/Mail/StudentVerificationMail.php',
         'App\\Models\\AdminSystem' => __DIR__ . '/../..' . '/app/Models/AdminSystem.php',
         'App\\Models\\Course' => __DIR__ . '/../..' . '/app/Models/Course.php',
         'App\\Models\\Feedback' => __DIR__ . '/../..' . '/app/Models/Feedback.php',
@@ -6681,9 +6682,9 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit7d2a70db79de725529cb25516453a43a::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit7d2a70db79de725529cb25516453a43a::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit7d2a70db79de725529cb25516453a43a::$classMap;
 
         }, null, ClassLoader::class);
     }

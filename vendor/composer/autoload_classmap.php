@@ -16,6 +16,7 @@ return array(
     'App\\Http\\Requests\\LoginRequest' => $baseDir . '/app/Http/Requests/LoginRequest.php',
     'App\\Http\\Requests\\RegisterStudentRequest' => $baseDir . '/app/Http/Requests/RegisterStudentRequest.php',
     'App\\Http\\Requests\\UpdateProfileRequest' => $baseDir . '/app/Http/Requests/UpdateProfileRequest.php',
+    'App\\Mail\\StudentVerificationMail' => $baseDir . '/app/Mail/StudentVerificationMail.php',
     'App\\Models\\AdminSystem' => $baseDir . '/app/Models/AdminSystem.php',
     'App\\Models\\Course' => $baseDir . '/app/Models/Course.php',
     'App\\Models\\Feedback' => $baseDir . '/app/Models/Feedback.php',
