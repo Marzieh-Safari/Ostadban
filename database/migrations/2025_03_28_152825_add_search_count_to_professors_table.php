@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('professors', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->unsignedInteger('search_count')->default(0)->after('average_rating');
         });
     }
 
     public function down()
     {
-        Schema::table('professors', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('search_count');
         });
     }
