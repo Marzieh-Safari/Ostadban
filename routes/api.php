@@ -14,6 +14,7 @@ use App\Http\Controllers\RatingController;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\StudentAuthController;
+use App\Http\Controllers\UserController;
 
 // AuthController
 Route::post('/register', [AuthController::class, 'register']);
@@ -44,12 +45,12 @@ Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'prof
 //});
 
 
-Route::get('/professor/most-searched', [ProfessorController::class, 'mostSearched']);
+Route::get('/professor/most-searched', [UserController::class, 'mostSearched']);
 Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedback', [FeedbackController::class, 'Index']);
 Route::get('/course/{id}', [CourseController::class, 'guestshow']);
-Route::get('/professor', [ProfessorController::class, 'guestIndex']);
-Route::get('/professor/{id}', [ProfessorController::class, 'guestShow']);
+Route::get('/professor', [UserController::class, 'guestIndex']);
+Route::get('/professor/{id}', [UserController::class, 'guestShow']);
 Route::get('/course', [CourseController::class, 'guestIndex']); // لیست دوره‌ها برای کاربران
 //Route::resource('course', CourseController::class);
 //Route::apiResource('student', StudentController::class);
