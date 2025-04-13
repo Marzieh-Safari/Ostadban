@@ -3,14 +3,25 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class LoginRequest extends FormRequest
 {
-    public function rules()
+    public mixed $password;
+    public mixed $email;
+
+    public function rules(): array
     {
         return [
-            'email' => 'required|email',
-            'password' => 'required|string'
+            'email' => [
+                'required',
+                'email',
+                Rule::exists('users', 'email')->where(function ($query) {
+                    return $query->where('type', 'student');
+                }),
+            ],
+            'password' => 'required|string',
         ];
     }
 }

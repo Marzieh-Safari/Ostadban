@@ -6,6 +6,7 @@ use App\Models\Feedback;
 use App\Models\Professor;
 use App\Models\Course;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class FeedbackController extends Controller
 {
@@ -38,17 +39,25 @@ class FeedbackController extends Controller
 
     }
 
-    public function rateProfessor(Request $request, Professor $professor) {
+    public function rateProfessor(Request $request, User $professor)
+    {
+        // بررسی اینکه این کاربر واقعاً یک استاد است
+        if ($professor->type !== 'professor') {
+            return response()->json(['error' => 'This user is not a professor.'], 400);
+        }
+    
+        // اعتبارسنجی درخواست
         $request->validate([
             'rating' => 'required|integer|between:1,5',
             'comment' => 'nullable|string'
         ]);
-        
+    
+        // ایجاد یا بروزرسانی امتیاز برای استاد
         $rating = $professor->ratings()->updateOrCreate(
-            ['student_id' => $request->user()->id],
+            ['student_id' => $request->user()->id], // فرض اینکه دانشجو به سیستم لاگین کرده است
             $request->only(['rating', 'comment'])
         );
-        
-        return response()->json($rating);
+    
+        return response()->json($rating, 200);
     }
 }

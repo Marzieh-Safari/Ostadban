@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Professor;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class CourseController extends Controller
 {
@@ -21,11 +22,11 @@ class CourseController extends Controller
     //}
 
     // نمایش فرم ایجاد دوره جدید
-    public function create()
-    {
-        $professor = Professor::all();
-        return view('course.create', compact('professor'));
-    }
+    //public function create()
+    //{
+        //$professor = Professor::all();
+        //return view('course.create', compact('professor'));
+    //}
 
     // ذخیره دوره جدید در پایگاه داده
     public function store(Request $request)
@@ -54,11 +55,11 @@ class CourseController extends Controller
     //}
 
     // نمایش فرم ویرایش دوره
-    public function edit(Course $course)
-    {
-        $professor = Professor::all();
-        return view('course.edit', compact('course', 'professor'));
-    }
+    //public function edit(Course $course)
+    //{
+        //$professor = Professor::all();
+        //return view('course.edit', compact('course', 'professor'));
+    //}
 
     // به‌روزرسانی اطلاعات دوره
     public function update(Request $request, Course $course)
@@ -124,29 +125,32 @@ class CourseController extends Controller
     }
 
 // جستجوی کلی برای دوره‌ها و اساتید (API)
-    public function searchAll(Request $request)
-    {
+public function searchAll(Request $request)
+{
     $query = $request->input('query'); // دریافت کلمه کلیدی جستجو
 
     // جستجو در دوره‌ها
-    $course = Course::with('professor')
+    $courses = Course::with(['professor' => function ($query) {
+        $query->where('type', 'professor'); // فقط اساتید
+    }])
         ->where('title', 'like', '%' . $query . '%')
         ->orWhere('description', 'like', '%' . $query . '%')
         ->get();
 
-    // جستجو در اساتید
-    $professor = Professor::where('name', 'like', '%' . $query . '%')->get();
+    // جستجو در کاربران با نوع professor
+    $professors = User::where('type', 'professor')
+        ->where('name', 'like', '%' . $query . '%')
+        ->get();
 
     // ترکیب نتایج
     $results = [
-        'course' => $course,
-        'professor' => $professor,
+        'courses' => $courses,
+        'professors' => $professors,
     ];
 
     // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
     if ($request->expectsJson()) {
         return response()->json($results, 200);
     }
-
-    }
+}
 }
