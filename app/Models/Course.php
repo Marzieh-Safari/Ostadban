@@ -24,7 +24,8 @@ class Course extends Model
 
     public function professor()
     {
-    return $this->belongsTo(Professor::class, 'faculty_number', 'faculty_number');
+        return $this->belongsTo(User::class, 'faculty_number', 'faculty_number')
+            ->where('type', 'professor'); // فقط کاربران با نقش پروفسور
     }
 
 }
