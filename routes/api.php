@@ -47,11 +47,11 @@ Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'prof
 
 Route::get('/professor/most-searched', [UserController::class, 'mostSearchedProfessors']);
 Route::get('/search', [CourseController::class, 'searchAll']);
-Route::get('/feedback', [FeedbackController::class, 'Index']);
-Route::get('/course/{id}', [CourseController::class, 'guestshow']);
+Route::get('/feedback', [FeedbackController::class, 'index']);
+Route::get('/course/{id}', [CourseController::class, 'guestShow']);
 Route::get('/professor', [UserController::class, 'index']);
-Route::get('/professor/{id}', [UserController::class, 'Show']);
-Route::get('/course', [CourseController::class, 'guestIndex']); // لیست دوره‌ها برای کاربران
+Route::get('/professor/{id}', [UserController::class, 'show']);
+Route::get('/courses', [CourseController::class, 'guestIndex']); 
 //Route::resource('course', CourseController::class);
 //Route::apiResource('student', StudentController::class);
 //Route::apiResource('admin', AdminSystemController::class); 

@@ -3,61 +3,91 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
-use App\Models\Professor;
-use App\Models\Course;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
 {
-
-    // ذخیره نظر جدید در پایگاه داده
+    // ذخیره نظر جدید
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:student,id',
-            'faculty_number' => 'required|exists:professor,id',
-            'course_id' => 'required|exists:course,id',
+            'student_id' => 'required|exists:students,id',
+            'faculty_number' => 'required|exists:professors,id',
+            'course_id' => 'required|exists:courses,id',
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string',
         ]);
 
-        Feedback::create($validated);
+        try {
+            Feedback::create($validated);
 
-        return redirect()->route('feedback.index')->with('success', 'Feedback created successfully.');
-    } 
-
-    //نمایش لیست نظرات (API)
-    public function Index(Request $request)
-    {
-    $feedbacks = Feedback::orderBy('created_at', 'asc')->with(['professor', 'course'])->get(); // مرتب‌سازی بر اساس تاریخ ایجاد و بارگذاری اطلاعات استاد و دوره
-
-    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-    if ($request->expectsJson()) {
-        return response()->json($feedbacks, 200);
-    }
-
-    }
-
-    public function rateProfessor(Request $request, User $professor)
-    {
-        // بررسی اینکه این کاربر واقعاً یک استاد است
-        if ($professor->type !== 'professor') {
-            return response()->json(['error' => 'This user is not a professor.'], 400);
+            return response()->json([
+                'success' => true,
+                'message' => 'نظر با موفقیت ثبت شد.',
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در ثبت نظر.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-    
-        // اعتبارسنجی درخواست
-        $request->validate([
+    }
+
+    // نمایش لیست نظرات با Pagination
+    public function index(Request $request)
+    {
+        try {
+            $feedbacks = Feedback::with(['professor', 'course'])->paginate(10);
+
+            return response()->json([
+                'success' => true,
+                'data' => $feedbacks,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در دریافت لیست نظرات.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // امتیازدهی به استاد
+    public function rateProfessor(Request $request, $professorId)
+    {
+        $validated = $request->validate([
             'rating' => 'required|integer|between:1,5',
-            'comment' => 'nullable|string'
+            'comment' => 'nullable|string',
         ]);
-    
-        // ایجاد یا بروزرسانی امتیاز برای استاد
-        $rating = $professor->ratings()->updateOrCreate(
-            ['student_id' => $request->user()->id], // فرض اینکه دانشجو به سیستم لاگین کرده است
-            $request->only(['rating', 'comment'])
-        );
-    
-        return response()->json($rating, 200);
+
+        try {
+            $professor = User::findOrFail($professorId);
+
+            if ($professor->type !== 'professor') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'این کاربر استاد نیست.',
+                ], 400);
+            }
+
+            $professor->ratings()->create([
+                'student_id' => $request->user()->id,
+                'rating' => $validated['rating'],
+                'comment' => $validated['comment'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'امتیاز با موفقیت ثبت شد.',
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در ثبت امتیاز.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

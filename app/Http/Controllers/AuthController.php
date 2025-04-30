@@ -23,11 +23,19 @@ class AuthController extends Controller
         
         $student = User::create($validated); // ایجاد رکورد جدید در جدول users
 
-        // ارسال ایمیل تأیید
-        Mail::to($student->email)->send(new StudentVerificationMail($student));
+        // ارسال ایمیل تأیید در بلوک try-catch برای مدیریت خطا
+        try {
+            Mail::to($student->email)->send(new StudentVerificationMail($student));
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'خطا در ارسال ایمیل تأیید. لطفاً بعداً دوباره تلاش کنید.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
         
         return response()->json([
-            'student' => $student
+            'student' => $student,
+            'message' => 'ثبت‌نام با موفقیت انجام شد. لطفاً ایمیل خود را تأیید کنید.'
         ], 201);
     }
 
@@ -66,7 +74,8 @@ class AuthController extends Controller
         if (!$student) {
             return response()->json([
                 'message' => 'توکن نامعتبر یا منقضی شده است. لطفاً درخواست توکن جدید دهید.',
-                'action_required' => 'request_new_token'
+                'action_required' => 'request_new_token',
+                'resend_link' => '/api/resend-verification-email'
             ], 410); // کد 410 = Gone (مناسب برای منابع منقضی شده)
         }
 
@@ -88,6 +97,7 @@ class AuthController extends Controller
         // پاسخ موفقیت‌آمیز با اطلاعات تکمیلی
         return response()->json([
             'message' => 'ایمیل شما با موفقیت تأیید شد!',
+            'name' => $student->name,
             'verified_at' => $student->fresh()->email_verified_at,
             'next_steps' => [
                 'login' => '/api/login',
@@ -127,6 +137,12 @@ class AuthController extends Controller
 
     public function profile(Request $request)
     {
-        return response()->json($request->user());
+        // محدود کردن اطلاعات برگشتی در پاسخ
+        return response()->json([
+            'name' => $request->user()->name,
+            'email' => $request->user()->email,
+            'type' => $request->user()->type,
+            'created_at' => $request->user()->created_at,
+        ]);
     }
 }

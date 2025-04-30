@@ -3,30 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\Professor;
+use App\Models\User; // استفاده از مدل User به جای Professor
 use Illuminate\Http\Request;
-use App\Models\User;
 
 class CourseController extends Controller
 {
-    // نمایش لیست دوره‌ها (برای وب و API)
-    //public function index(Request $request)
-    //{
-        //$course = Course::with('professor')->get(); // همراه با اطلاعات استاد
+    // نمایش لیست دوره‌ها با Pagination (API و وب)
+    public function index(Request $request)
+    {
+        try {
+            $courses = Course::with('professor')->paginate(10);
 
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        //if ($request->expectsJson()) {
-            //return response()->json($course, 200);
-        //}
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $courses,
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در دریافت لیست دوره‌ها.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
-    //}
-
-    // نمایش فرم ایجاد دوره جدید
-    //public function create()
-    //{
-        //$professor = Professor::all();
-        //return view('course.create', compact('professor'));
-    //}
+    // نمایش فرم ایجاد دوره جدید (فقط برای وب)
+    public function create()
+    {
+        try {
+            $professors = User::where('type', 'professor')->get(); // گرفتن لیست اساتید
+        } catch (\Exception $e) {
+            return redirect()->route('course.index')->withErrors('خطا در بارگذاری فرم ایجاد دوره.');
+        }
+    }
 
     // ذخیره دوره جدید در پایگاه داده
     public function store(Request $request)
@@ -34,32 +45,48 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'faculty_number' => 'required|exists:professor,id',
+            'faculty_number' => 'required|exists:users,id', // بررسی وجود استاد در جدول کاربران
         ]);
 
-        Course::create($validated);
+        try {
+            Course::create($validated);
 
-        return redirect()->route('course.index')->with('success', 'Course created successfully.');
+            return redirect()->route('course.index')->with('success', 'دوره با موفقیت ایجاد شد.');
+        } catch (\Exception $e) {
+            return redirect()->route('course.create')->withErrors('خطا در ذخیره‌سازی دوره.');
+        }
     }
 
-    // نمایش جزئیات یک دوره (برای وب و API)
-    //public function show(Course $course, Request $request)
-    //{
-        //$course->load('professor'); // بارگذاری اطلاعات استاد مرتبط
+    // نمایش جزئیات یک دوره (API و وب)
+    public function show(Course $course, Request $request)
+    {
+        try {
+            $course->load('professor');
 
-        // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-        //if ($request->expectsJson()) {
-            //return response()->json($course, 200);
-        //}
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $course,
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در نمایش جزئیات دوره.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
-    //}
-
-    // نمایش فرم ویرایش دوره
-    //public function edit(Course $course)
-    //{
-        //$professor = Professor::all();
-        //return view('course.edit', compact('course', 'professor'));
-    //}
+    // نمایش فرم ویرایش دوره (فقط برای وب)
+    public function edit(Course $course)
+    {
+        try {
+            $professors = User::where('type', 'professor')->get(); // گرفتن لیست اساتید
+        } catch (\Exception $e) {
+            return redirect()->route('course.index')->withErrors('خطا در بارگذاری فرم ویرایش دوره.');
+        }
+    }
 
     // به‌روزرسانی اطلاعات دوره
     public function update(Request $request, Course $course)
@@ -67,90 +94,96 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'faculty_number' => 'required|exists:professor,id',
+            'faculty_number' => 'required|exists:users,id', // بررسی وجود استاد در جدول کاربران
         ]);
 
-        $course->update($validated);
+        try {
+            $course->update($validated);
 
-        return redirect()->route('course.index')->with('success', 'Course updated successfully.');
+            return redirect()->route('course.index')->with('success', 'دوره با موفقیت به‌روزرسانی شد.');
+        } catch (\Exception $e) {
+            return redirect()->route('course.edit', $course->id)->withErrors('خطا در به‌روزرسانی دوره.');
+        }
     }
 
     // حذف دوره از پایگاه داده
     public function destroy(Course $course)
     {
-        $course->delete();
-        return redirect()->route('course.index')->with('success', 'Course deleted successfully.');
+        try {
+            $course->delete();
+
+            return redirect()->route('course.index')->with('success', 'دوره با موفقیت حذف شد.');
+        } catch (\Exception $e) {
+            return redirect()->route('course.index')->withErrors('خطا در حذف دوره.');
+        }
     }
 
     // نمایش لیست دوره‌ها برای مهمان‌ها (API)
     public function guestIndex()
     {
-    try {
-        // واکشی فقط فیلدهای title و slug از جدول courses
-        $course = Course::select('title', 'slug')->get();
+        try {
+            $courses = Course::select('title', 'slug', 'description')->get();
 
-        // بررسی خالی بودن داده‌ها
-        if ($course->isEmpty()) {
             return response()->json([
                 'success' => true,
-                'message' => 'No courses found.',
-                'data' => []
+                'data' => $courses,
             ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در دریافت لیست دوره‌ها.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // بازگرداندن داده‌ها در قالب JSON
-        return response()->json($course, 200);
-
-    } catch (\Exception $e) {
-        // مدیریت خطاهای احتمالی
-        return response()->json([
-            'success' => false,
-            'message' => 'Server Error',
-            'error' => $e->getMessage()
-        ], 500);
     }
-    }
+
     // نمایش جزئیات یک دوره برای مهمان‌ها (API)
-    public function guestshow($id, Request $request)
+    public function guestShow($id)
     {
-        $course = Course::with('professor')->findOrFail($id); // بارگذاری اطلاعات دوره و استاد مرتبط
+        try {
+            $course = Course::with('professor')->findOrFail($id);
 
-    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-    if ($request->expectsJson()) {
-        return response()->json($course, 200);
+            return response()->json([
+                'success' => true,
+                'data' => $course,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'دوره یافت نشد.',
+                'error' => $e->getMessage(),
+            ], 404);
+        }
     }
 
-    // اگر درخواست از وب باشد، می‌توانید یک پیام خطا یا 404 برگردانید
-    //return response()->json(['error' => 'Unauthorized access'], 403);
+    // جستجوی کلی برای دوره‌ها و اساتید (API)
+    public function searchAll(Request $request)
+    {
+        $query = $request->input('query');
+
+        try {
+            $courses = Course::with('professor')
+                ->where('title', 'like', '%' . $query . '%')
+                ->orWhere('description', 'like', '%' . $query . '%')
+                ->get();
+
+            $professors = User::where('type', 'professor')
+                ->where('full_name', 'like', '%' . $query . '%')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'courses' => $courses,
+                    'professors' => $professors,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در جستجو.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
-
-// جستجوی کلی برای دوره‌ها و اساتید (API)
-public function searchAll(Request $request)
-{
-    $query = $request->input('query'); // دریافت کلمه کلیدی جستجو
-
-    // جستجو در دوره‌ها
-    $courses = Course::with(['professor' => function ($query) {
-        $query->where('type', 'professor'); // فقط اساتید
-    }])
-        ->where('title', 'like', '%' . $query . '%')
-        ->orWhere('description', 'like', '%' . $query . '%')
-        ->get();
-
-    // جستجو در کاربران با نوع professor
-    $professors = User::where('type', 'professor')
-        ->where('name', 'like', '%' . $query . '%')
-        ->get();
-
-    // ترکیب نتایج
-    $results = [
-        'courses' => $courses,
-        'professors' => $professors,
-    ];
-
-    // اگر درخواست از API باشد، داده‌ها را به صورت JSON بازگردانید
-    if ($request->expectsJson()) {
-        return response()->json($results, 200);
-    }
-}
 }

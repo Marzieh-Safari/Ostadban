@@ -11,21 +11,24 @@ class Course extends Model
     {
         parent::boot();
 
-        static::creating(function ($courses) {
-            $courses->slug = Str::slug($courses->title);
+        // ایجاد اسلاگ هنگام ذخیره‌سازی یا بروزرسانی
+        static::creating(function ($course) {
+            $course->slug = Str::slug($course->title);
         });
 
-        static::updating(function ($courses) {
-            $courses->slug = Str::slug($courses->title);
+        static::updating(function ($course) {
+            $course->slug = Str::slug($course->title);
         });
     }
-    protected $table = 'courses';
-    protected $fillable = ['title','description', 'slug', 'faculty_number'];
 
+    protected $table = 'courses';
+
+    protected $fillable = ['title', 'description', 'slug', 'credits', 'course_code'];
+
+    // رابطه با استاد
     public function professor()
     {
-        return $this->belongsTo(User::class, 'faculty_number', 'faculty_number')
-            ->where('type', 'professor'); // فقط کاربران با نقش پروفسور
+        return $this->belongsTo(User::class, 'professor_id')
+                    ->where('type', 'professor'); // فقط کاربران با نقش استاد
     }
-
 }
