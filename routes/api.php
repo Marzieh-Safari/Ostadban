@@ -49,7 +49,7 @@ Route::get('/professor/most-searched', [UserController::class, 'mostSearchedProf
 Route::get('/search', [CourseController::class, 'searchAll']);
 Route::get('/feedback', [FeedbackController::class, 'index']);
 Route::get('/course/{id}', [CourseController::class, 'guestShow']);
-Route::get('/professor', [UserController::class, 'index']);
+Route::get('/professors', [UserController::class, 'index']);
 Route::get('/professor/{id}', [UserController::class, 'show']);
 Route::get('/courses', [CourseController::class, 'guestIndex']); 
 //Route::resource('course', CourseController::class);
