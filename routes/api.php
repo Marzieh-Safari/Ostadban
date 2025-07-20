@@ -52,6 +52,7 @@ Route::get('/course/{id}', [CourseController::class, 'guestShow']);
 Route::get('/professors', [UserController::class, 'index']);
 Route::get('/professor/{id}', [UserController::class, 'show']);
 Route::get('/courses', [CourseController::class, 'guestIndex']); 
+Route::get('/search-departments', [UserController::class, 'searchDepartments']);
 //Route::resource('course', CourseController::class);
 //Route::apiResource('student', StudentController::class);
 //Route::apiResource('admin', AdminSystemController::class); 

@@ -9,25 +9,50 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     // نمایش تمام کاربران براساس نوع (admin, professor, student) با Pagination
-    public function index(Request $request)
-    {
-        try {
-            $type = $request->query('type');
-            $users = User::where('type', $type)->paginate(10);
+   public function index(Request $request)
+{
+    try {
+        $type = $request->query('type');
+        
+        $users = User::where('type', $type) // شرط type فقط برای users
+            ->with(['courses' => function($query) {
+                $query->select('id', 'title', 'slug', 'course_code', 'professor_id');
+            }])
+            ->paginate(10)
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'full_name' => $user->full_name,
+                    'department' => $user->department,
+                    'role' => $user->type,
+                    'IS_BOARD_MEMBER' => (bool)$user->is_board_member,
+                    'average_rating' => (float)$user->average_rating,
+                    'teaching_experience' => (int)$user->teaching_experience,
+                    'comments_count' => (int)$user->comments_count,
+                    'courses' => $user->courses->map(function($course) {
+                        return [
+                            'title' => $course->title,
+                            'slug' => $course->slug,
+                            'course_code' => $course->code // توجه: از alias استفاده شده
+                        ];
+                    })
+                ];
+            });
 
-            return response()->json([
-                'success' => true,
-                'data' => $users,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'خطایی رخ داد.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'خطایی رخ داد.',
+            'error' => $e->getMessage()
+        ], 500);
     }
-
+}
     // ایجاد کاربر جدید
     public function store(Request $request)
     {
@@ -150,5 +175,19 @@ class UserController extends Controller
             'error' => $e->getMessage(),
         ], 500);
     }
+}
+    public function searchDepartments(Request $request)
+{
+    $searchQuery = $request->input('name'); // نام استاد برای جستجو
+
+    $users = User::where('type', 'professor') // فقط اساتید
+        ->where('full_name', 'LIKE', '%' . $searchQuery . '%') // جستجوی جزئی
+        ->select('full_name', 'department') // فقط نام و دپارتمان
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $users,
+    ]);
 }
 }

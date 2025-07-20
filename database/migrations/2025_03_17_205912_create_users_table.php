@@ -40,6 +40,16 @@ return new class extends Migration {
             $table->string('faculty_number')->nullable()->unique();
             $table->string('department')->nullable();
             $table->float('average_rating')->default(0);
+            $table->boolean('is_board_member')->default(false);
+            $table->integer('teaching_experience')
+                  ->unsigned()
+                  ->default(0)
+                  ->comment('تعداد سالهای تجربه تدریس استاد');
+                  
+            $table->integer('comments_count')
+                  ->unsigned()
+                  ->default(0)
+                  ->comment('تعداد نظرات دریافتی برای استاد');
         });
     }
 

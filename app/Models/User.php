@@ -6,6 +6,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Auth\MustVerifyEmail; // اضافه کردن این کلاس برای تأیید ایمیل
+ /**
+ * @property string $type
+ * @property float $average_rating
+ */
 
 class User extends Authenticatable implements MustVerifyEmail // پیاده‌سازی MustVerifyEmail
 {
@@ -27,6 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
         'is_approved',
         'created_by',
         'updated_by',
+        'is_board_member',
+        'teaching_experience',
+        'comments_count',
     ];
 
     protected $hidden = ['password', 'remember_token', 'verification_token'];
@@ -43,17 +50,17 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
      */
 
     // رابطه دانشجویان با دوره‌ها (Many-to-Many)
-    public function coursesForStudents()
-    {
-        return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
-                    ->wherePivot('type', 'student'); // فقط دوره‌های مربوط به دانشجو
-    }
+    //public function coursesForStudents()
+    ////{
+        ////return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
+                    ///->wherePivot('type', 'student'); // فقط دوره‌های مربوط به دانشجو
+    ///}
 
     // رابطه استاد با دوره‌ها (One-to-Many)
-    public function coursesForProfessor()
+    public function courses()
     {
-        return $this->hasMany(Course::class, 'professor_id')
-                    ->where('type', 'professor'); // فقط دوره‌های مربوط به استاد
+        return $this->hasMany(Course::class, 'professor_id');
+                    //->where('type', 'professor'); // فقط دوره‌های مربوط به استاد
     }
 
     // رابطه استاد با فیدبک‌ها
