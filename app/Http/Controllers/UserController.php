@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    // نمایش تمام کاربران براساس نوع (admin, professor, student) با Pagination
+
    public function index(Request $request)
 {
     try {
-        $type = $request->query('type', 'professor'); // مقدار پیش‌فرض professor
+        $type = $request->query('type', 'professor');
         
         $users = User::where('type', $type)
             ->with(['courses' => function($query) {
@@ -37,7 +37,7 @@ class UserController extends Controller
                 'username' => $user->username,
                 'full_name' => $user->full_name,
                 'department' => $user->department,
-                'type' => $user->type, // استفاده از type به جای role
+                'type' => $user->type, 
                 'is_board_member' => (bool)$user->is_board_member,
                 'average_rating' => (float)$user->average_rating,
                 'teaching_experience' => (int)$user->teaching_experience,
@@ -46,7 +46,7 @@ class UserController extends Controller
                     return [
                         'title' => $course->title,
                         'slug' => $course->slug,
-                        'course_code' => $course->course_code // استفاده از نام صحیح فیلد
+                        'course_code' => $course->course_code
                     ];
                 })
             ];
