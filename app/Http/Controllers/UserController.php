@@ -12,37 +12,49 @@ class UserController extends Controller
    public function index(Request $request)
 {
     try {
-        $type = $request->query('type');
+        $type = $request->query('type', 'professor'); // مقدار پیش‌فرض professor
         
-        $users = User::where('type', $type) // شرط type فقط برای users
+        $users = User::where('type', $type)
             ->with(['courses' => function($query) {
                 $query->select('id', 'title', 'slug', 'course_code', 'professor_id');
             }])
-            ->paginate(10)
-            ->map(function($user) {
-                return [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'full_name' => $user->full_name,
-                    'department' => $user->department,
-                    'role' => $user->type,
-                    'IS_BOARD_MEMBER' => (bool)$user->is_board_member,
-                    'average_rating' => (float)$user->average_rating,
-                    'teaching_experience' => (int)$user->teaching_experience,
-                    'comments_count' => (int)$user->comments_count,
-                    'courses' => $user->courses->map(function($course) {
-                        return [
-                            'title' => $course->title,
-                            'slug' => $course->slug,
-                            'course_code' => $course->code // توجه: از alias استفاده شده
-                        ];
-                    })
-                ];
-            });
+            ->select([
+                'id',
+                'username',
+                'full_name',
+                'department',
+                'type',
+                'is_board_member',
+                'average_rating',
+                'teaching_experience',
+                'comments_count'
+            ])
+            ->get();
+
+        $result = $users->map(function($user) {
+            return [
+                'id' => $user->id,
+                'username' => $user->username,
+                'full_name' => $user->full_name,
+                'department' => $user->department,
+                'type' => $user->type, // استفاده از type به جای role
+                'is_board_member' => (bool)$user->is_board_member,
+                'average_rating' => (float)$user->average_rating,
+                'teaching_experience' => (int)$user->teaching_experience,
+                'comments_count' => (int)$user->comments_count,
+                'courses' => $user->courses->map(function($course) {
+                    return [
+                        'title' => $course->title,
+                        'slug' => $course->slug,
+                        'course_code' => $course->course_code // استفاده از نام صحیح فیلد
+                    ];
+                })
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $users
+            'data' => $result
         ]);
         
     } catch (\Exception $e) {
