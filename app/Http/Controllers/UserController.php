@@ -190,4 +190,59 @@ class UserController extends Controller
         'data' => $users,
     ]);
 }
+
+public function topRatedProfessors(Request $request, $limit = 10)
+{
+    try {
+        // اعتبارسنجی مقدار limit
+        $limit = $limit ?? $request->input('limit', 10);
+        $limit = min(50, max(1, (int)$limit)); // حداکثر 50 نتیجه
+        
+        $professors = User::where('type', 'professor')
+            ->where('average_rating', '>', 0) // فقط اساتید با امتیاز
+            //->withCount('feedbacks') // تعداد فیدبک‌ها
+            ->orderBy('average_rating', 'desc')
+            //->orderBy('feedbacks_count', 'desc') // در صورت تساوی امتیاز، تعداد فیدبک بیشتر
+            ->take($limit)
+            ->get([
+                'id',
+                'full_name',
+                'department',
+                'average_rating',
+                'teaching_experience',
+                'comments_count',
+                'is_board_member'
+            ]);
+        
+        // تبدیل داده‌ها به فرمت مناسب
+        $transformedProfessors = $professors->map(function ($professor) {
+            return [
+                'id' => $professor->id,
+                'name' => $professor->full_name,
+                'department' => $professor->department,
+                'rating' => (float) number_format($professor->average_rating, 1),
+                'experience' => $professor->teaching_experience,
+                'reviews_count' => $professor->comments_count,
+                'is_board_member' => (bool) $professor->is_board_member,
+                'courses_count' => $professor->courses->count() ?? 0
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $transformedProfessors,
+            'meta' => [
+                'total' => $professors->count(),
+                'limit' => $limit
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'خطا در دریافت اساتید برتر',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }
