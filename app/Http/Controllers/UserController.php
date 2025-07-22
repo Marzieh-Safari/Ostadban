@@ -29,6 +29,10 @@ class UserController extends Controller
                 'teaching_experience',
                 'comments_count'
             ])
+            ->orderBy('average_rating', 'desc')
+            ->orderBy('teaching_experience', 'desc')
+            ->orderBy('comments_count', 'desc')
+            ->orderBy('id', 'asc')
             ->get();
 
         $result = $users->map(function($user) {
