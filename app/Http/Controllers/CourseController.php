@@ -28,17 +28,6 @@ class CourseController extends Controller
             ], 500);
         }
     }
-
-    // نمایش فرم ایجاد دوره جدید (فقط برای وب)
-    public function create()
-    {
-        try {
-            $professors = User::where('type', 'professor')->get(); // گرفتن لیست اساتید
-        } catch (\Exception $e) {
-            return redirect()->route('course.index')->withErrors('خطا در بارگذاری فرم ایجاد دوره.');
-        }
-    }
-
     // ذخیره دوره جدید در پایگاه داده
     public function store(Request $request)
     {
@@ -75,16 +64,6 @@ class CourseController extends Controller
                 'message' => 'خطا در نمایش جزئیات دوره.',
                 'error' => $e->getMessage(),
             ], 500);
-        }
-    }
-
-    // نمایش فرم ویرایش دوره (فقط برای وب)
-    public function edit(Course $course)
-    {
-        try {
-            $professors = User::where('type', 'professor')->get(); // گرفتن لیست اساتید
-        } catch (\Exception $e) {
-            return redirect()->route('course.index')->withErrors('خطا در بارگذاری فرم ویرایش دوره.');
         }
     }
 
@@ -167,7 +146,7 @@ class CourseController extends Controller
                 ->orWhere('description', 'like', '%' . $query . '%')
                 ->get();
 
-            $professors = User::where('type', 'professor')
+            $professors = User::where('role', 'professor')
                 ->where('full_name', 'like', '%' . $query . '%')
                 ->get();
 

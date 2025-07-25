@@ -19,7 +19,7 @@ class AuthController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         $validated['verification_token'] = Str::random(60);
         $validated['token_expires_at'] = now()->addHours(24);
-        $validated['type'] = 'student'; // مشخص کردن نوع کاربر به عنوان دانشجو
+        $validated['role'] = 'student'; // مشخص کردن نوع کاربر به عنوان دانشجو
         
         $student = User::create($validated); // ایجاد رکورد جدید در جدول users
 
@@ -41,7 +41,7 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $student = User::where('email', $request->email)->where('type', 'student')->first(); // بررسی نوع کاربر
+        $student = User::where('email', $request->email)->where('role', 'student')->first(); // بررسی نوع کاربر
 
         if (!$student || !Hash::check($request->password, $student->password)) {
             return response()->json(['message' => 'اعتبارسنجی ناموفق'], 401);
@@ -67,7 +67,7 @@ class AuthController extends Controller
     {
         // یافتن دانشجو با توکن معتبر و بررسی انقضا
         $student = User::where('verification_token', $token)
-            ->where('type', 'student') // فقط دانشجویان
+            ->where('role', 'student') // فقط دانشجویان
             ->where('token_expires_at', '>', now())
             ->first();
 
@@ -110,7 +110,7 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email|exists:users,email']);
 
-        $student = User::where('email', $request->email)->where('type', 'student')->first();
+        $student = User::where('email', $request->email)->where('role', 'student')->first();
 
         if ($student->email_verified_at) {
             return response()->json(['message' => 'ایمیل قبلاً تأیید شده است.'], 208);
@@ -141,7 +141,7 @@ class AuthController extends Controller
         return response()->json([
             'name' => $request->user()->name,
             'email' => $request->user()->email,
-            'type' => $request->user()->type,
+            'role' => $request->user()->role,
             'created_at' => $request->user()->created_at,
         ]);
     }

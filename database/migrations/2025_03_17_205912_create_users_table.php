@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->string('username')->unique();
             $table->string('email')->unique();
             $table->string('password');
-            $table->enum('type', ['admin', 'student', 'professor']);
+            $table->enum('role', ['admin', 'student', 'professor']);
             $table->boolean('is_approved')->default(false);
             $table->rememberToken();
             $table->timestamps();
@@ -50,6 +50,10 @@ return new class extends Migration {
                   ->unsigned()
                   ->default(0)
                   ->comment('تعداد نظرات دریافتی برای استاد');
+                  
+            $table->string('avatar')
+              ->nullable()
+              ->comment('آدرس تصویر آواتار استاد');
         });
     }
 

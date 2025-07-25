@@ -14,14 +14,14 @@ class Feedback extends Model
     public function student()
     {
         return $this->belongsTo(User::class, 'student_id')
-                    ->where('type', 'student'); // فقط کاربران با نقش دانشجو
+                    ->where('role', 'student'); // فقط کاربران با نقش دانشجو
     }
 
     // رابطه با استاد
     public function professor()
     {
         return $this->belongsTo(User::class, 'professor_id')
-                    ->where('type', 'professor'); // فقط کاربران با نقش استاد
+                    ->where('role', 'professor'); // فقط کاربران با نقش استاد
     }
 
     // رابطه با دوره

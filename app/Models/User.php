@@ -7,7 +7,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Auth\MustVerifyEmail; // اضافه کردن این کلاس برای تأیید ایمیل
  /**
- * @property string $type
+ * @property string $role
  * @property float $average_rating
  */
 
@@ -20,7 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
         'username',
         'email',
         'password',
-        'type',
+        'role',
         'student_number',
         'faculty_number',
         'major',
@@ -53,21 +53,19 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     //public function coursesForStudents()
     ////{
         ////return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
-                    ///->wherePivot('type', 'student'); // فقط دوره‌های مربوط به دانشجو
     ///}
 
     // رابطه استاد با دوره‌ها (One-to-Many)
     public function courses()
     {
         return $this->hasMany(Course::class, 'professor_id');
-                    //->where('type', 'professor'); // فقط دوره‌های مربوط به استاد
     }
 
     // رابطه استاد با فیدبک‌ها
     public function feedbacks()
     {
         return $this->hasMany(Feedback::class, 'professor_id')
-                    ->where('type', 'professor'); // فقط فیدبک‌های مربوط به استاد
+                    ->where('role', 'professor'); // فقط فیدبک‌های مربوط به استاد
     }
 
     /**
@@ -82,7 +80,7 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     // محاسبه میانگین رتبه برای استاد
     public function calculateAverageRating()
     {
-        if ($this->type === 'professor') {
+        if ($this-> role === 'professor') {
             $this->average_rating = $this->feedbacks()->avg('rating');
             $this->save();
         }
@@ -96,12 +94,12 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     // دانشجویان تایید شده
     public function scopeApprovedStudents($query)
     {
-        return $query->where('type', 'student')->where('is_approved', true);
+        return $query->where('role', 'student')->where('is_approved', true);
     }
 
     // مرتب‌سازی استادها بر اساس رتبه
     public function scopeSortedProfessorsByRating($query)
     {
-        return $query->where('type', 'professor')->orderBy('average_rating', 'desc');
+        return $query->where('role', 'professor')->orderBy('average_rating', 'desc');
     }
 }

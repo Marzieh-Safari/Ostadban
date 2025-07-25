@@ -18,7 +18,7 @@ class LoginRequest extends FormRequest
                 'required',
                 'email',
                 Rule::exists('users', 'email')->where(function ($query) {
-                    return $query->where('type', 'student');
+                    return $query->where('role', 'student');
                 }),
             ],
             'password' => 'required|string',

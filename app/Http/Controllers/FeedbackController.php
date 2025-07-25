@@ -65,7 +65,7 @@ class FeedbackController extends Controller
         try {
             $professor = User::findOrFail($professorId);
 
-            if ($professor->type !== 'professor') {
+            if ($professor->role!== 'professor') {
                 return response()->json([
                     'success' => false,
                     'message' => 'این کاربر استاد نیست.',

@@ -12,28 +12,30 @@ class UserController extends Controller
    public function index(Request $request)
 {
     try {
-        $type = $request->query('type', 'professor');
+        $role = $request->query('role', 'professor');
+        $perPage = $request->query('per_page', 10);
         
-        $users = User::where('type', $type)
+        $users = User::where('role', $role)
             ->with(['courses' => function($query) {
-                $query->select('id', 'title', 'slug', 'course_code', 'professor_id');
+                $query->select('id', 'title','course_code', 'professor_id');
             }])
             ->select([
                 'id',
                 'username',
                 'full_name',
                 'department',
-                'type',
+                'role',
                 'is_board_member',
                 'average_rating',
                 'teaching_experience',
-                'comments_count'
+                'comments_count',
+                'avatar',
             ])
             ->orderBy('average_rating', 'desc')
             ->orderBy('teaching_experience', 'desc')
             ->orderBy('comments_count', 'desc')
             ->orderBy('id', 'asc')
-            ->get();
+            ->paginate($perPage);
 
         $result = $users->map(function($user) {
             return [
@@ -41,11 +43,12 @@ class UserController extends Controller
                 'username' => $user->username,
                 'full_name' => $user->full_name,
                 'department' => $user->department,
-                'type' => $user->type, 
+                'role' => $user->role, 
                 'is_board_member' => (bool)$user->is_board_member,
                 'average_rating' => (float)$user->average_rating,
                 'teaching_experience' => (int)$user->teaching_experience,
                 'comments_count' => (int)$user->comments_count,
+                'avatar' => $user ->avatar,
                 'courses' => $user->courses->map(function($course) {
                     return [
                         'title' => $course->title,
@@ -58,7 +61,23 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $result
+            'data' => $result,
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+                'last_page' => $users->lastPage(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+                'role' => $role,
+                'timestamp' => now()->toDateTimeString()
+            ],
+            'links' => [
+                'first' => $users->url(1),
+                'last' => $users->url($users->lastPage()),
+                'prev' => $users->previousPageUrl(),
+                'next' => $users->nextPageUrl()
+            ]
         ]);
         
     } catch (\Exception $e) {
@@ -73,7 +92,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:admin,professor,student',
+            'role' => 'required|in:admin,professor,student',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8',
@@ -81,7 +100,7 @@ class UserController extends Controller
 
         try {
             $user = User::create([
-                'type' => $validated['type'],
+                'role' => $validated['role'],
                 'username' => $validated['username'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
@@ -175,7 +194,7 @@ class UserController extends Controller
 {
     try {
         // گرفتن لیست اساتید مرتب شده بر اساس تعداد جست‌وجو
-        $professors = User::where('type', 'professor') // فقط کاربران با نوع "professor"
+        $professors = User::where('role', 'professor') // فقط کاربران با نوع "professor"
             ->orderBy('search_count', 'desc') // مرتب‌سازی بر اساس تعداد جست‌وجو
             ->take(10) // گرفتن 10 استاد برتر
             ->get(['id', 'full_name', 'email', 'search_count']); // فقط ستون‌های لازم
@@ -196,7 +215,7 @@ class UserController extends Controller
 {
     $searchQuery = $request->input('name'); // نام استاد برای جستجو
 
-    $users = User::where('type', 'professor') // فقط اساتید
+    $users = User::where('role', 'professor') // فقط اساتید
         ->where('full_name', 'LIKE', '%' . $searchQuery . '%') // جستجوی جزئی
         ->select('full_name', 'department') // فقط نام و دپارتمان
         ->get();
@@ -214,7 +233,7 @@ public function topRatedProfessors(Request $request, $limit = 10)
         $limit = $limit ?? $request->input('limit', 10);
         $limit = min(50, max(1, (int)$limit)); // حداکثر 50 نتیجه
         
-        $professors = User::where('type', 'professor')
+        $professors = User::where('role', 'professor')
             ->where('average_rating', '>', 0) // فقط اساتید با امتیاز
             //->withCount('feedbacks') // تعداد فیدبک‌ها
             ->orderBy('average_rating', 'desc')
@@ -225,22 +244,17 @@ public function topRatedProfessors(Request $request, $limit = 10)
                 'full_name',
                 'department',
                 'average_rating',
-                'teaching_experience',
-                'comments_count',
-                'is_board_member'
+                'avatar',
             ]);
         
         // تبدیل داده‌ها به فرمت مناسب
         $transformedProfessors = $professors->map(function ($professor) {
             return [
                 'id' => $professor->id,
-                'name' => $professor->full_name,
+                'full_name' => $professor->full_name,
                 'department' => $professor->department,
-                'rating' => (float) number_format($professor->average_rating, 1),
-                'experience' => $professor->teaching_experience,
-                'reviews_count' => $professor->comments_count,
-                'is_board_member' => (bool) $professor->is_board_member,
-                'courses_count' => $professor->courses->count() ?? 0
+                'average_rating' => (float) number_format($professor->average_rating, 1),
+                'avatar' => $professor ->avatar,
             ];
         });
 
