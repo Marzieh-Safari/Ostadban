@@ -10,6 +10,8 @@ return new class extends Migration {
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table ->string('avatar');
+            $table ->string('slug') ->nullable();
             $table->text('description')->nullable();
             
             // ارتباط با استاد (اصلاح‌شده)

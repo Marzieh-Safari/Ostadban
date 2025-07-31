@@ -8,113 +8,113 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    // نمایش لیست دوره‌ها با Pagination (API و وب)
-    public function index(Request $request)
-    {
-        try {
-            $courses = Course::with('professor')->paginate(10);
+    public function guestIndex(Request $request)
+{
+    try {
+        // پارامترهای دریافت شده
+        $perPage = 12; // ثابت
+        $page = $request->query('page', 1);
+        $departmentId = $request->query('department_id');
+        $professorId = $request->query('professor_id');
+        $search = $request->query('search');
 
-            if ($request->expectsJson()) {
+        // شروع کوئری
+        $query = Course::with(['professor' => function($query) {
+            $query->select('id', 'department', 'full_name');
+        }])
+        ->select('id', 'title', 'slug', 'description', 'professor_id', 'avatar');
+
+        // اعمال فیلترها
+        if ($departmentId) {
+            // ساخت لیست دپارتمان‌ها با آیدی
+            $departments = User::whereNotNull('department')
+                ->where('role', 'professor')
+                ->distinct()
+                ->pluck('department')
+                ->values()
+                ->map(function ($name, $index) {
+                    return [
+                        'id' => $index + 1,
+                        'name' => $name
+                    ];
+                });
+
+            $department = $departments->firstWhere('id', (int)$departmentId);
+            
+            if (!$department) {
                 return response()->json([
                     'success' => true,
-                    'data' => $courses,
+                    'data' => []
                 ]);
             }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'خطا در دریافت لیست دوره‌ها.',
-                'error' => $e->getMessage(),
-            ], 500);
+
+            $query->whereHas('professor', function($q) use ($department) {
+                $q->where('department', $department['name']);
+            });
         }
-    }
-    // ذخیره دوره جدید در پایگاه داده
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'faculty_number' => 'required|exists:users,id', // بررسی وجود استاد در جدول کاربران
-        ]);
 
-        try {
-            Course::create($validated);
-
-            return redirect()->route('course.index')->with('success', 'دوره با موفقیت ایجاد شد.');
-        } catch (\Exception $e) {
-            return redirect()->route('course.create')->withErrors('خطا در ذخیره‌سازی دوره.');
+        if ($professorId) {
+            $query->where('professor_id', $professorId);
         }
-    }
 
-    // نمایش جزئیات یک دوره (API و وب)
-    public function show(Course $course, Request $request)
-    {
-        try {
-            $course->load('professor');
-
-            if ($request->expectsJson()) {
+        // جستجو (حداقل 3 حرف و معتبر)
+        if ($search) {
+            $search = trim($search);
+            if (mb_strlen($search) < 3 || preg_match('/^[^\p{L}\p{N}]+$/u', $search)) {
                 return response()->json([
                     'success' => true,
-                    'data' => $course,
+                    'data' => []
                 ]);
             }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'خطا در نمایش جزئیات دوره.',
-                'error' => $e->getMessage(),
-            ], 500);
+            $query->where('title', 'LIKE', "%{$search}%");
         }
-    }
 
-    // به‌روزرسانی اطلاعات دوره
-    public function update(Request $request, Course $course)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'faculty_number' => 'required|exists:users,id', // بررسی وجود استاد در جدول کاربران
-        ]);
+        // صفحه بندی
+        $courses = $query->paginate($perPage, ['*'], 'page', $page);
 
-        try {
-            $course->update($validated);
+        // تبدیل به ساختار دلخواه
+        $result = $courses->map(function($course) {
+            return [
+                'id' => $course->id,
+                'title' => $course->title,
+                'slug' => $course->slug,
+                'description' => $course->description,
+                'avatar' => $course->avatar,
+                'department' => $course->professor->department ?? null,
+                'professor' => $course->professor ? [
+                    'id' => $course->professor->id,
+                    'full_name' => $course->professor->full_name
+                ] : null
+            ];
+        });
 
-            return redirect()->route('course.index')->with('success', 'دوره با موفقیت به‌روزرسانی شد.');
-        } catch (\Exception $e) {
-            return redirect()->route('course.edit', $course->id)->withErrors('خطا در به‌روزرسانی دوره.');
+        $response = [
+            'success' => true,
+            'data' => $result
+        ];
+
+        // اضافه کردن متا فقط اگر داده وجود داشته باشد
+        if (!$result->isEmpty()) {
+            $response['meta'] = [
+                'current_page' => $courses->currentPage(),
+                'per_page' => $perPage,
+                'total' => $courses->total(),
+                'last_page' => $courses->lastPage(),
+                'from' => $courses->firstItem(),
+                'to' => $courses->lastItem(),
+            ];
         }
+
+        return response()->json($response, 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'خطا در دریافت لیست دوره‌ها.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
-
-    // حذف دوره از پایگاه داده
-    public function destroy(Course $course)
-    {
-        try {
-            $course->delete();
-
-            return redirect()->route('course.index')->with('success', 'دوره با موفقیت حذف شد.');
-        } catch (\Exception $e) {
-            return redirect()->route('course.index')->withErrors('خطا در حذف دوره.');
-        }
-    }
-
-    // نمایش لیست دوره‌ها برای مهمان‌ها (API)
-    public function guestIndex()
-    {
-        try {
-            $courses = Course::select('title', 'slug', 'description')->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $courses,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'خطا در دریافت لیست دوره‌ها.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+}
 
     // نمایش جزئیات یک دوره برای مهمان‌ها (API)
     public function guestShow($id)
