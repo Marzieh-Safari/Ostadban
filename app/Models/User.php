@@ -45,16 +45,7 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
         'average_rating' => 'float',
     ];
 
-    /**
-     * روابط
-     */
-
-    // رابطه دانشجویان با دوره‌ها (Many-to-Many)
-    //public function coursesForStudents()
-    ////{
-        ////return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
-    ///}
-
+    
     // رابطه استاد با دوره‌ها (One-to-Many)
     public function courses()
     {

@@ -12,17 +12,18 @@ class CourseController extends Controller
 {
     try {
         // پارامترهای دریافت شده
-        $perPage = 12; // ثابت
+        $perPage = 12;
         $page = $request->query('page', 1);
         $departmentId = $request->query('department_id');
         $professorId = $request->query('professor_id');
-        $search = $request->query('search');
+        $search = $request->query('course_title');
+        $sortBy = $request->query('sort_by');
 
         // شروع کوئری
-        $query = Course::with(['professor' => function($query) {
+        $query = Course::with(['professors' => function($query) {
             $query->select('id', 'department', 'full_name');
         }])
-        ->select('id', 'title', 'slug', 'description', 'professor_id', 'avatar');
+        ->select('id', 'title', 'slug', 'description', 'professor_id', 'avatar','comments_count');
 
         // اعمال فیلترها
         if ($departmentId) {
@@ -48,27 +49,40 @@ class CourseController extends Controller
                 ]);
             }
 
-            $query->whereHas('professor', function($q) use ($department) {
-                $q->where('department', $department['name']);
-            });
+             $query->whereHas('professors', function($q) use ($departmentId) {
+             $q->where('department', $departmentId);
+             });
         }
 
         if ($professorId) {
-            $query->where('professor_id', $professorId);
+            $query->whereHas('professors', function($q) use ($professorId) {
+                $q->where('users.id', $professorId);
+            });
         }
 
-        // جستجو (حداقل 3 حرف و معتبر)
+        // جستجو با محدودیت‌های جدید
         if ($search) {
             $search = trim($search);
-            if (mb_strlen($search) < 3 || preg_match('/^[^\p{L}\p{N}]+$/u', $search)) {
+
+            if (preg_match('/[^پچجحخهعغفقثصضشسیبلاتنمکگوئدذرزطظژؤإأءًٌٍَُِّ\s]/u', $search) || 
+                is_numeric($search) ||
+                preg_match('/[#@$%^&*()_+=]/', $search)) {
                 return response()->json([
                     'success' => true,
                     'data' => []
                 ]);
             }
-            $query->where('title', 'LIKE', "%{$search}%");
+            
+            if (mb_strlen($search) >= 3) {
+                $query->where('title', 'LIKE', "%{$search}%");
+            }
         }
 
+        switch ($sortBy) {
+            case 'most_commented':
+                $query->orderBy('comments_count', 'desc');
+                break;
+        }
         // صفحه بندی
         $courses = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -79,12 +93,15 @@ class CourseController extends Controller
                 'title' => $course->title,
                 'slug' => $course->slug,
                 'description' => $course->description,
+                'comments_count' => $course->comments_count,
                 'avatar' => $course->avatar,
-                'department' => $course->professor->department ?? null,
-                'professor' => $course->professor ? [
-                    'id' => $course->professor->id,
-                    'full_name' => $course->professor->full_name
-                ] : null
+                'department' => $course->professors->first()?->department ?? null,
+                'professors' => $course->professors->map(function($professor) {
+                    return [
+                        'id' => $professor->id,
+                        'full_name' => $professor->full_name
+                    ];
+                })->toArray()
             ];
         });
 
@@ -116,53 +133,5 @@ class CourseController extends Controller
     }
 }
 
-    // نمایش جزئیات یک دوره برای مهمان‌ها (API)
-    public function guestShow($id)
-    {
-        try {
-            $course = Course::with('professor')->findOrFail($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $course,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'دوره یافت نشد.',
-                'error' => $e->getMessage(),
-            ], 404);
-        }
-    }
-
-    // جستجوی کلی برای دوره‌ها و اساتید (API)
-    public function searchAll(Request $request)
-    {
-        $query = $request->input('query');
-
-        try {
-            $courses = Course::with('professor')
-                ->where('title', 'like', '%' . $query . '%')
-                ->orWhere('description', 'like', '%' . $query . '%')
-                ->get();
-
-            $professors = User::where('role', 'professor')
-                ->where('full_name', 'like', '%' . $query . '%')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'courses' => $courses,
-                    'professors' => $professors,
-                ],
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'خطا در جستجو.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
 }

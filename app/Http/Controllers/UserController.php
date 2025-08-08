@@ -17,10 +17,9 @@ class UserController extends Controller
         $perPage = $request->query('per_page', 12);
         $sortBy = $request->query('sort_by', 'popular');
         $departmentId = $request->query('department_id');
-        $departmentName = $request->query('department_name');
         $courseId = $request->query('course_id');
-        $courseTitle = $request->query('course_title');
         $search = $request->query('search');
+        $page = $request->query('page', 1);
 
         $query = User::where('role', $role)
             ->with(['courses' => function($query) {
@@ -39,66 +38,48 @@ class UserController extends Controller
                 'avatar',
             ]);
 
-        // اعمال فیلتر جستجو عمومی - اصلاح شده
+        // فیلتر جستجو
         if ($search) {
             $search = trim($search);
-            if (mb_strlen($search) < 3 || preg_match('/^[^\p{L}\p{N}]+$/u', $search)) {
+            
+            if (preg_match('/[^پچجحخهعغفقثصضشسیبلاتنمکگوئدذرزطظژؤإأءًٌٍَُِّ\s]/u', $search) || 
+                is_numeric($search) ||
+                preg_match('/[#@$%^&*()_+=]/', $search)) {
                 return response()->json([
                     'success' => true,
                     'data' => []
                 ]);
             }
-            $query->where('full_name', 'LIKE', "%{$search}%");
-        }
-
-        // فیلتر بر اساس دپارتمان (آیدی یا نام) - اصلاح شده
-        if ($departmentId || $departmentName) {
-            if ($departmentId) {
-                $departments = User::whereNotNull('department')
-                    ->where('role', 'professor')
-                    ->distinct()
-                    ->pluck('department');
-
-                $departmentName = $departments->values()->get((int)$departmentId - 1);
-                
-                if (!$departmentName) {
-                    return response()->json([
-                        'success' => true,
-                        'data' => []
-                    ]);
-                }
-
-                $query->where('department', $departmentName);
-            } elseif ($departmentName) {
-                $departmentName = trim($departmentName);
-                if (mb_strlen($departmentName) < 3 || preg_match('/^[^\p{L}\p{N}]+$/u', $departmentName)) {
-                    return response()->json([
-                        'success' => true,
-                        'data' => []
-                    ]);
-                }
-                $query->where('department', 'LIKE', "%{$departmentName}%");
+            
+            if (mb_strlen($search) >= 3) {
+                $query->where('full_name', 'LIKE', "%{$search}%");
             }
         }
 
-        // فیلتر بر اساس دوره (آیدی یا عنوان) - اصلاح شده
-        if ($courseId || $courseTitle) {
-            if ($courseId) {
-                $query->whereHas('courses', function($q) use ($courseId) {
-                    $q->where('id', $courseId);
-                });
-            } elseif ($courseTitle) {
-                $courseTitle = trim($courseTitle);
-                if (mb_strlen($courseTitle) < 3 || preg_match('/^[^\p{L}\p{N}]+$/u', $courseTitle)) {
-                    return response()->json([
-                        'success' => true,
-                        'data' => []
-                    ]);
-                }
-                $query->whereHas('courses', function($q) use ($courseTitle) {
-                    $q->where('title', 'LIKE', "%{$courseTitle}%");
-                });
+        // فقط فیلتر department_id باقی ماند
+        if ($departmentId) {
+            $departments = User::whereNotNull('department')
+                ->where('role', 'professor')
+                ->distinct()
+                ->pluck('department');
+
+            $departmentName = $departments->values()->get((int)$departmentId - 1);
+            
+            if (!$departmentName) {
+                return response()->json([
+                    'success' => true,
+                    'data' => []
+                ]);
             }
+
+            $query->where('department', $departmentName);
+        }
+
+        // فیلتر دوره
+        if ($courseId) {
+            $query->whereHas('courses', function($q) use ($courseId) {
+                $q->where('id', $courseId);
+            });
         }
 
         // مرتب‌سازی
@@ -116,7 +97,7 @@ class UserController extends Controller
         }
 
         $query->orderBy('id', 'asc');
-        $users = $query->paginate($perPage);
+        $users = $query->paginate($perPage, ['*'], 'page', $page);
 
         $result = $users->map(function($user) {
             return [
@@ -146,7 +127,6 @@ class UserController extends Controller
             'data' => $result
         ];
 
-        // اضافه کردن متا فقط اگر داده وجود داشته باشد
         if (!$result->isEmpty()) {
             $response['meta'] = [
                 'current_page' => $users->currentPage(),
@@ -163,99 +143,56 @@ class UserController extends Controller
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => 'خطایی رخ داد.',
+            'message' => 'خطایی در سرور رخ داد.',
             'error' => $e->getMessage()
         ], 500);
     }
 }
-  public function getDepartments()
+
+
+
+  public function getDepartments(Request $request)
 {
-    $departments = User::whereNotNull('department')
+    $departmentName = $request->query('department_name');
+    
+    $query = User::whereNotNull('department')
         ->where('role', 'professor')
         ->distinct()
-        ->pluck('department')
-        ->values() // تبدیل به آرایه ایندکس‌دار
+        ->select('department');
+    
+
+    if ($departmentName) {
+        $departmentName = trim($departmentName);
+        if (preg_match('/[^پچجحخهعغفقثصضشسیبلاتنمکگوئدذرزطظژؤإأءًٌٍَُِّ\s]/u', $departmentName)) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+        
+
+        if (mb_strlen($departmentName) >= 3) {
+            $query->where('department', 'LIKE', "%{$departmentName}%");
+        }
+        
+    }
+    
+    $departments = $query->pluck('department')
+        ->values()
         ->map(function ($name, $index) {
             return [
-                'id' => $index + 1, // شروع از 1 و افزایش ترتیبی
+                'id' => $index + 1,
                 'name' => $name
             ];
         });
-
+    
     return response()->json([
         'success' => true,
         'data' => $departments
     ]);
 }
-    public function mostSearchedProfessors(Request $request)
-{
-    try {
-        // گرفتن لیست اساتید مرتب شده بر اساس تعداد جست‌وجو
-        $professors = User::where('role', 'professor') // فقط کاربران با نوع "professor"
-            ->orderBy('search_count', 'desc') // مرتب‌سازی بر اساس تعداد جست‌وجو
-            ->take(10) // گرفتن 10 استاد برتر
-            ->get(['id', 'full_name', 'email', 'search_count']); // فقط ستون‌های لازم
 
-        return response()->json([
-            'success' => true,
-            'data' => $professors,
-        ], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'خطا در دریافت اطلاعات.',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-}
-    /**
- * دریافت نام دپارتمان بر اساس آیدی
- *
- * @param int $departmentId
- * @return \Illuminate\Http\JsonResponse
- */
-public function getDepartmentName($departmentId)
-{
-    try {
-        // دریافت تمام دپارتمان‌ها با همان منطق قبلی
-        $departments = User::whereNotNull('department')
-            ->where('role', 'professor')
-            ->distinct()
-            ->pluck('department')
-            ->values()
-            ->map(function ($name, $index) {
-                return [
-                    'id' => $index + 1,
-                    'name' => $name
-                ];
-            });
 
-        // پیدا کردن دپارتمان با آیدی مورد نظر
-        $department = $departments->firstWhere('id', $departmentId);
-
-        if (!$department) {
-            return response()->json([
-                'success' => false,
-                'message' => 'دپارتمان با آیدی مورد نظر یافت نشد'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $department['id'],
-                'name' => $department['name']
-            ]
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'خطا در دریافت نام دپارتمان',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
 
 public function topRatedProfessors(Request $request, $limit = 10)
 {

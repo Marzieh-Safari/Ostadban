@@ -13,6 +13,7 @@ return new class extends Migration {
             $table ->string('avatar');
             $table ->string('slug') ->nullable();
             $table->text('description')->nullable();
+            $table->integer('comments_count')->nullable();
             
             // ارتباط با استاد (اصلاح‌شده)
             $table->foreignId('professor_id')
