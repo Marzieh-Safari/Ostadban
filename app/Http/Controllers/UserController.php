@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Course;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Config;
 
 class UserController extends Controller
 {
@@ -17,7 +19,7 @@ class UserController extends Controller
         $perPage = $request->query('per_page', 12);
         $sortBy = $request->query('sort_by', 'popular');
         $departmentId = $request->query('department_id');
-        $courseId = $request->query('course_id');
+        $courseSlug = $request->query('course_slug'); // تغییر از course_id به course_slug
         $search = $request->query('search');
         $page = $request->query('page', 1);
 
@@ -56,7 +58,7 @@ class UserController extends Controller
             }
         }
 
-        // فقط فیلتر department_id باقی ماند
+        // فیلتر دپارتمان
         if ($departmentId) {
             $departments = User::whereNotNull('department')
                 ->where('role', 'professor')
@@ -75,10 +77,10 @@ class UserController extends Controller
             $query->where('department', $departmentName);
         }
 
-        // فیلتر دوره
-        if ($courseId) {
-            $query->whereHas('courses', function($q) use ($courseId) {
-                $q->where('id', $courseId);
+        // فیلتر دوره بر اساس slug
+        if ($courseSlug) {
+            $query->whereHas('courses', function($q) use ($courseSlug) {
+                $q->where('slug', $courseSlug); // تغییر از id به slug
             });
         }
 
@@ -243,4 +245,71 @@ public function topRatedProfessors(Request $request, $limit = 10)
         ], 500);
     }
 }
+
+public function showProfessorByUsername($username)
+    {
+        try {
+            // دریافت اطلاعات استاد به همراه دوره‌های تدریس
+            $professor = User::with(['taughtCourses'])
+                ->where('username', $username)
+                ->where('role', 'professor')
+                ->first([
+                    'id',
+                    'username',
+                    'full_name',
+                    'department',
+                    'role',
+                    'is_board_member',
+                    'average_rating',
+                    'teaching_experience',
+                    'comments_count',
+                    'avatar'
+                ]);
+
+            if (!$professor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'استاد مورد نظر یافت نشد'
+                ], 404);
+            }
+
+            // ساختار پاسخ
+            $response = [
+                'id' => $professor->id,
+                'username' => $professor->username,
+                'full_name' => $professor->full_name,
+                'department' => $professor->department,
+                'role' => $professor->role,
+                'is_board_member' => (bool)$professor->is_board_member,
+                'average_rating' => (float)$professor->average_rating,
+                'teaching_experience' => (int)$professor->teaching_experience,
+                'comments_count' => (int)$professor->comments_count,
+                'avatar' => $professor->avatar,
+                'courses' => $professor->taughtCourses->map(function ($course) {
+                    return [
+                        'id' => $course->id,
+                        'title' => $course->title,
+                        'slug' => $course->slug,
+                        'course_code' => $course->course_code,
+                        'avatar' => $course->avatar,
+                        'comments_count' => $course->comments_count,
+                        'average_rating' => $course->average_rating,
+                        'department' => $course->department
+                    ];
+                })
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در پردازش درخواست',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }

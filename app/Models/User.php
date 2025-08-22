@@ -48,10 +48,9 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     
     // رابطه استاد با دوره‌ها (One-to-Many)
     public function courses()
-    {
-        return $this->hasMany(Course::class, 'professor_id');
-    }
-
+{
+    return $this->belongsToMany(Course::class, 'course_professor', 'professor_id', 'course_id');
+}
     // رابطه استاد با فیدبک‌ها
     public function feedbacks()
     {
@@ -92,5 +91,15 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     public function scopeSortedProfessorsByRating($query)
     {
         return $query->where('role', 'professor')->orderBy('average_rating', 'desc');
+    }
+
+    public function taughtCourses()
+    {
+        return $this->belongsToMany(
+            Course::class,
+            'course_professor', // نام جدول واسط
+            'professor_id',     // کلید خارجی مربوط به استاد در جدول واسط
+            'course_id'         // کلید خارجی مربوط به دوره در جدول واسط
+        )->select('courses.id', 'courses.title', 'courses.slug', 'courses.course_code', 'courses.avatar' ,'courses.comments_count' ,'course_professor.average_rating' ,'courses.department');
     }
 }

@@ -9,6 +9,9 @@ return new class extends Migration {
     {
         Schema::create('feedbacks', function (Blueprint $table) {
             $table->id();
+
+            //ارتباط با کورس
+            $table->foreignId('course_id');
             
             // ارتباط با دانشجو (اصلاح‌شده)
             $table->foreignId('student_id')
