@@ -11,8 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         api: __DIR__.'/../routes/api.php'
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        //
+    ->withMiddleware(function (Illuminate\Foundation\Configuration\Middleware $middleware) {
+    $middleware->alias([
+        'jwt.auth' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
+        'jwt.refresh' => \Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

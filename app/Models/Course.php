@@ -12,11 +12,13 @@ class Course extends Model
 
     protected $fillable = ['title', 'description', 'slug', 'credits', 'course_code','comments_count'];
 
-    // رابطه با استاد
+
     public function professors()
     {
-        return $this->belongsToMany(User::class, 'course_professor', 'course_id', 'professor_id');
+        return $this->belongsToMany(User::class, 'course_professor', 'course_id', 'professor_id')
+            ->withPivot('average_rating'); 
     }
+
 
     public function feedbacks()
     {

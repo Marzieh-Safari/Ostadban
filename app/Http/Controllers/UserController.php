@@ -19,7 +19,7 @@ class UserController extends Controller
         $perPage = $request->query('per_page', 12);
         $sortBy = $request->query('sort_by', 'popular');
         $departmentId = $request->query('department_id');
-        $courseSlug = $request->query('course_slug'); // تغییر از course_id به course_slug
+        $courseSlug = $request->query('course_slug'); 
         $search = $request->query('search');
         $page = $request->query('page', 1);
 
@@ -40,7 +40,7 @@ class UserController extends Controller
                 'avatar',
             ]);
 
-        // فیلتر جستجو
+
         if ($search) {
             $search = trim($search);
             
@@ -58,7 +58,7 @@ class UserController extends Controller
             }
         }
 
-        // فیلتر دپارتمان
+
         if ($departmentId) {
             $departments = User::whereNotNull('department')
                 ->where('role', 'professor')
@@ -77,14 +77,14 @@ class UserController extends Controller
             $query->where('department', $departmentName);
         }
 
-        // فیلتر دوره بر اساس slug
+
         if ($courseSlug) {
             $query->whereHas('courses', function($q) use ($courseSlug) {
-                $q->where('slug', $courseSlug); // تغییر از id به slug
+                $q->where('slug', $courseSlug); 
             });
         }
 
-        // مرتب‌سازی
+
         switch ($sortBy) {
             case 'experienced':
                 $query->orderBy('teaching_experience', 'desc');
@@ -199,15 +199,13 @@ class UserController extends Controller
 public function topRatedProfessors(Request $request, $limit = 10)
 {
     try {
-        // اعتبارسنجی مقدار limit
+
         $limit = $limit ?? $request->input('limit', 10);
-        $limit = min(50, max(1, (int)$limit)); // حداکثر 50 نتیجه
+        $limit = min(50, max(1, (int)$limit)); 
         
         $professors = User::where('role', 'professor')
-            ->where('average_rating', '>', 0) // فقط اساتید با امتیاز
-            //->withCount('feedbacks') // تعداد فیدبک‌ها
+            ->where('average_rating', '>', 0) 
             ->orderBy('average_rating', 'desc')
-            //->orderBy('feedbacks_count', 'desc') // در صورت تساوی امتیاز، تعداد فیدبک بیشتر
             ->take($limit)
             ->get([
                 'id',
@@ -217,7 +215,7 @@ public function topRatedProfessors(Request $request, $limit = 10)
                 'avatar',
             ]);
         
-        // تبدیل داده‌ها به فرمت مناسب
+
         $transformedProfessors = $professors->map(function ($professor) {
             return [
                 'id' => $professor->id,
@@ -249,7 +247,6 @@ public function topRatedProfessors(Request $request, $limit = 10)
 public function showProfessorByUsername($username)
     {
         try {
-            // دریافت اطلاعات استاد به همراه دوره‌های تدریس
             $professor = User::with(['taughtCourses'])
                 ->where('username', $username)
                 ->where('role', 'professor')
@@ -273,7 +270,7 @@ public function showProfessorByUsername($username)
                 ], 404);
             }
 
-            // ساختار پاسخ
+
             $response = [
                 'id' => $professor->id,
                 'username' => $professor->username,

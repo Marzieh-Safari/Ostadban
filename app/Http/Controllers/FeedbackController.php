@@ -9,7 +9,6 @@ use App\Models\Course;
 
 class FeedbackController extends Controller
 {
-    // ذخیره نظر جدید
     public function getProfessorFeedbacks($professorUsername, Request $request)
 {
     try {
@@ -43,7 +42,7 @@ class FeedbackController extends Controller
 
         $feedbacks = $query->get();
 
-        // تبدیل به ساختار خروجی
+
         $result = $feedbacks->map(function($feedback) {
             return [
                 'id' => $feedback->id,
@@ -87,13 +86,13 @@ public function getFeedbacks(Request $request)
         $professorUsername = $request->query('professor_username');
         $courseSlug = $request->query('course_slug');
         
-        if (!$professorUsername && !$courseSlug) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لطفاً professor_username یا course_slug را ارسال کنید',
-                'data' => []
-            ], 400);
-        }
+        //if (!$professorUsername && !$courseSlug) {
+            //return response()->json([
+                //'success' => false,
+                //'message' => 'لطفاً professor_username یا course_slug را ارسال کنید',
+                //'data' => []
+            //], 400);
+        //}
 
         $query = Feedback::with([
             'course:id,title,slug',
@@ -104,7 +103,6 @@ public function getFeedbacks(Request $request)
         $professorExists = true;
         $courseExists = true;
 
-        // فیلتر بر اساس professor_username
         if ($professorUsername) {
             $professor = User::where('username', $professorUsername)
                 ->where('role', 'professor')
@@ -117,7 +115,7 @@ public function getFeedbacks(Request $request)
             }
         }
 
-        // فیلتر بر اساس course_slug
+
         if ($courseSlug) {
             $course = Course::where('slug', $courseSlug)->first();
             
@@ -128,7 +126,7 @@ public function getFeedbacks(Request $request)
             }
         }
 
-        // بررسی خطاها
+
         if (!$professorExists && !$courseExists) {
             return response()->json([
                 'success' => false,
@@ -153,10 +151,10 @@ public function getFeedbacks(Request $request)
             ], 404);
         }
 
-        // مرتب‌سازی از جدید به قدیم
+
         $feedbacks = $query->orderBy('created_at', 'desc')->get();
 
-        // اگر داده‌ نداشتیم
+
         if ($feedbacks->isEmpty()) {
             return response()->json([
                 'success' => true,
@@ -165,7 +163,7 @@ public function getFeedbacks(Request $request)
             ]);
         }
 
-        // تبدیل به ساختار خروجی
+
         $result = $feedbacks->map(function($feedback) {
             return [
                 'id' => $feedback->id,

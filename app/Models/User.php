@@ -5,15 +5,26 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Illuminate\Contracts\Auth\MustVerifyEmail; // اضافه کردن این کلاس برای تأیید ایمیل
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Contracts\Auth\MustVerifyEmail; 
  /**
  * @property string $role
  * @property float $average_rating
  */
 
-class User extends Authenticatable implements MustVerifyEmail // پیاده‌سازی MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, JWTSubject 
 {
     use Notifiable;
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey(); 
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return []; 
+    }
 
     protected $fillable = [
         'full_name',
@@ -46,28 +57,24 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     ];
 
     
-    // رابطه استاد با دوره‌ها (One-to-Many)
+
     public function courses()
 {
     return $this->belongsToMany(Course::class, 'course_professor', 'professor_id', 'course_id');
 }
-    // رابطه استاد با فیدبک‌ها
+
     public function feedbacks()
     {
         return $this->hasMany(Feedback::class, 'professor_id')
-                    ->where('role', 'professor'); // فقط فیدبک‌های مربوط به استاد
+                    ->where('role', 'professor'); 
     }
 
-    /**
-     * سایر متدها
-     */
-    // تولید توکن تایید برای دانشجو
+
     public static function generateVerificationToken()
     {
         return Str::random(60);
     }
 
-    // محاسبه میانگین رتبه برای استاد
     public function calculateAverageRating()
     {
         if ($this-> role === 'professor') {
@@ -77,17 +84,13 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
         return $this->average_rating;
     }
 
-    /**
-     * اسکوپ‌ها
-     */
 
-    // دانشجویان تایید شده
     public function scopeApprovedStudents($query)
     {
         return $query->where('role', 'student')->where('is_approved', true);
     }
 
-    // مرتب‌سازی استادها بر اساس رتبه
+
     public function scopeSortedProfessorsByRating($query)
     {
         return $query->where('role', 'professor')->orderBy('average_rating', 'desc');
@@ -97,9 +100,9 @@ class User extends Authenticatable implements MustVerifyEmail // پیاده‌س
     {
         return $this->belongsToMany(
             Course::class,
-            'course_professor', // نام جدول واسط
-            'professor_id',     // کلید خارجی مربوط به استاد در جدول واسط
-            'course_id'         // کلید خارجی مربوط به دوره در جدول واسط
+            'course_professor', 
+            'professor_id',     
+            'course_id'         
         )->select('courses.id', 'courses.title', 'courses.slug', 'courses.course_code', 'courses.avatar' ,'courses.comments_count' ,'course_professor.average_rating' ,'courses.department');
     }
 }

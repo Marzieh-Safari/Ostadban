@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\User; // استفاده از مدل User به جای Professor
+use App\Models\User; 
 use Egulias\EmailValidator\Warning\DeprecatedComment;
 use Illuminate\Http\Request;
 
@@ -15,41 +15,41 @@ class CourseController extends Controller
         $perPage = 12;
         $page = $request->query('page', 1);
         $departmentId = $request->query('department_id');
-        $professorUsername = $request->query('professor_username'); // تغییر از professor_id به professor_username
+        $professorUsername = $request->query('professor_username'); 
         $search = $request->query('course_title');
         $sortBy = $request->query('sort_by');
 
-        // شروع کوئری
+
         $query = Course::with(['professors' => function($query) {
-            $query->select('users.id', 'users.full_name', 'users.username'); // اضافه کردن username به select
+            $query->select('users.id', 'users.full_name', 'users.username'); 
         }])
         ->select('courses.id', 'courses.title', 'courses.slug', 'courses.description', 'courses.comments_count','courses.department','courses.department_id');
 
-        // اعمال فیلترها
+
         if ($departmentId) {
             $query->where('courses.department_id', $departmentId);
         }
 
         if ($professorUsername) {
             $query->whereHas('professors', function($q) use ($professorUsername) {
-                $q->where('users.username', $professorUsername); // تغییر از id به username
+                $q->where('users.username', $professorUsername); 
             });
         }
 
-        // جستجو
+
         if ($search && mb_strlen($search) >= 3) {
             $query->where('courses.title', 'LIKE', "%{$search}%");
         }
 
-        // مرتب‌سازی
+ 
         if ($sortBy === 'most_commented') {
             $query->orderBy('comments_count', 'desc');
         }
 
-        // صفحه‌بندی
+
         $courses = $query->paginate($perPage, ['*'], 'page', $page);
 
-        // تبدیل به ساختار دلخواه
+
         $result = $courses->map(function($course) {
             return [
                 'id' => $course->id,
@@ -89,5 +89,48 @@ class CourseController extends Controller
     }
 }
 
+
+    public function show($slug)
+    {
+
+        $course = Course::with(['professors' => function($query) {
+            $query->select(
+                'users.id',
+                'users.full_name',
+                'users.username',
+                'users.department',
+                'users.avatar',
+                'course_professor.average_rating'
+            );
+        }])->where('slug', $slug)->firstOrFail();
+
+
+        $professors = $course->professors->map(function($professor) use ($course) {
+            return [
+                'avatar' => $professor->avatar ?? null,
+                'department' => $professor->department,
+                'username' => $professor->username,
+                'full_name' => $professor->full_name,
+                'average_rating' => $professor->pivot->average_rating,
+                'comments_count' => $course->feedbacks()
+                    ->where('professor_id', $professor->id)
+                    ->count()
+            ];
+        });
+
+
+        return response()->json([
+            'success' => true,
+            'data' => [    
+                'avatar' => $course->avatar ?? null,
+                'comments_count' => $course->comments_count,
+                'department' => $course->department,
+                'title' => $course->title,
+                'description' => $course->description,
+                'slug' => $course->slug,
+                'professors' => $professors
+            ]
+        ]);
+    }
 
 }
