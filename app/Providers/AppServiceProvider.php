@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot()
-    {
-        Feedback::observe(FeedbackObserver::class);
-    }
+{
+    Feedback::observe(FeedbackObserver::class);
+}
 }

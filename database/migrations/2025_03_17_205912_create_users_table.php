@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
-            // فیلدهای اصلی
+            
             $table->id();
             $table->string('full_name');
             $table->string('username')->unique();
@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->rememberToken();
             $table->timestamps();
 
-            // فیلدهای Audit (اصلاح‌شده)
+            
             $table->foreignId('created_by')
                 ->nullable()
                 ->constrained('users')
@@ -29,14 +29,14 @@ return new class extends Migration {
                 ->constrained('users')
                 ->onDelete('set null');
 
-            // فیلدهای دانشجو
+            
             $table->string('student_number')->nullable()->unique();
             $table->string('verification_token')->nullable();
             $table->timestamp('token_expires_at')->nullable();
             $table->string('phone')->nullable();
             $table->string('major')->nullable();
 
-            // فیلدهای استاد
+            
             $table->string('faculty_number')->nullable()->unique();
             $table->string('department')->nullable();
             $table->float('average_rating')->default(0);

@@ -121,7 +121,8 @@ class CourseController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [    
+            'data' => [ 
+                'id' => $course->id,   
                 'avatar' => $course->avatar ?? null,
                 'comments_count' => $course->comments_count,
                 'department' => $course->department,

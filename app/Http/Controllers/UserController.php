@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Course;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -309,4 +310,108 @@ public function showProfessorByUsername($username)
             ], 500);
         }
     }
+
+
+    public function update(Request $request)
+{
+    try {
+       
+        if (!$token = $request->bearerToken()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'توکن احراز هویت ارائه نشده است'
+            ], 401);
+        }
+
+        
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'کاربری با این توکن یافت نشد'
+                ], 404);
+            }
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'توکن منقضی شده است',
+                'error_code' => 'token_expired'
+            ], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'توکن نامعتبر است',
+                'error_code' => 'token_invalid'
+            ], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در احراز هویت',
+                'error_details' => $e->getMessage(),
+                'error_code' => 'jwt_error'
+            ], 500);
+        }
+
+        
+        try {
+            $validatedData = $request->validate([
+                'password' => 'sometimes|required|string|min:8',
+                'major' => 'nullable|string|max:255',
+                'EntryYear' => 'nullable|string|min:1390|max:' . date('Y'),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در اعتبارسنجی داده‌ها',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        
+        $updated = false;
+        
+        if ($request->filled('password')) {
+            $user->password = Hash::make($validatedData['password']);
+            $updated = true;
+        }
+
+        if ($request->filled('major')) {
+            $user->major = $validatedData['major'];
+            $updated = true;
+        }
+
+        if ($request->filled('EntryYear')) {
+            $user->EntryYear = $validatedData['EntryYear'];
+            $updated = true;
+        }
+
+        
+        if ($updated && !$user->save()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در ذخیره‌سازی اطلاعات کاربر'
+            ], 500);
+        }
+
+        
+        return response()->json([
+            'success' => true,
+            'message' => $updated ? 'اطلاعات کاربر با موفقیت به‌روزرسانی شد' : 'هیچ تغییری اعمال نشد',
+            'user' => [
+                'id' => $user->id,
+                'major' => $user->major,
+                'EntryYear' => $user->EntryYear
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'خطای سرور در پردازش درخواست'
+        ], 500);
+    }
+}
+
 }

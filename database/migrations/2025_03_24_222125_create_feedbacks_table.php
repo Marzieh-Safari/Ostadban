@@ -10,15 +10,15 @@ return new class extends Migration {
         Schema::create('feedbacks', function (Blueprint $table) {
             $table->id();
 
-            //ارتباط با کورس
+            
             $table->foreignId('course_id');
             
-            // ارتباط با دانشجو (اصلاح‌شده)
+            
             $table->foreignId('student_id')
                 ->constrained('users')
                 ->onDelete('cascade');
             
-            // ارتباط با استاد (اصلاح‌شده)
+            
             $table->foreignId('professor_id')
                 ->constrained('users')
                 ->onDelete('cascade');
@@ -27,7 +27,7 @@ return new class extends Migration {
             $table->text('comment')->nullable();
             $table->timestamps();
 
-            // ایندکس ترکیبی (اصلاح‌شده)
+            
             $table->index(['student_id', 'professor_id']);
         });
     }

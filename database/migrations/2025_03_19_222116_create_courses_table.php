@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->integer('comments_count')->nullable();
             
-            // ارتباط با استاد (اصلاح‌شده)
+            
             $table->foreignId('professor_id')
                 ->constrained('users')
                 ->onDelete('cascade');
@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->integer('credits')->default(3);
             $table->timestamps();
 
-            // ایندکس‌ها
+            
             $table->index('professor_id');
         });
     }
