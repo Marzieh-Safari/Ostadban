@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Cache;
 
 class FeedbackController extends Controller
 {
@@ -86,7 +87,7 @@ public function getFeedbacks(Request $request)
     try {
         $professorUsername = $request->query('professor_username');
         $courseSlug = $request->query('course_slug');
-        
+
         //if (!$professorUsername && !$courseSlug) {
             //return response()->json([
                 //'success' => false,
@@ -108,7 +109,7 @@ public function getFeedbacks(Request $request)
             $professor = User::where('username', $professorUsername)
                 ->where('role', 'professor')
                 ->first();
-            
+
             if (!$professor) {
                 $professorExists = false;
             } else {
@@ -119,7 +120,7 @@ public function getFeedbacks(Request $request)
 
         if ($courseSlug) {
             $course = Course::where('slug', $courseSlug)->first();
-            
+
             if (!$course) {
                 $courseExists = false;
             } else {
@@ -204,7 +205,7 @@ public function getFeedbacks(Request $request)
     public function userFeedbackList(Request $request)
 {
     try {
-        
+
         if (!$request->bearerToken()) {
             return response()->json([
                 'success' => false,
@@ -212,7 +213,7 @@ public function getFeedbacks(Request $request)
             ], 401);
         }
 
-        
+
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
@@ -222,7 +223,7 @@ public function getFeedbacks(Request $request)
             ], 401);
         }
 
-        
+
         $professors = User::where('role', 'professor')
             ->with(['courses' => function ($query) {
                 $query->select('id', 'title', 'course_code', 'professor_id', 'slug');
@@ -264,7 +265,7 @@ public function getFeedbacks(Request $request)
             ];
         });
 
-        
+
         $courses = Course::with(['professors' => function ($query) {
             $query->select('users.id', 'users.full_name', 'users.username');
         }])
@@ -288,12 +289,12 @@ public function getFeedbacks(Request $request)
             ];
         });
 
-        
+
         $feedbacks = Feedback::with([
             'course:id,title,slug',
             'professor:id,full_name,username',
         ])
-            ->where('student_id', $user->id) 
+            ->where('student_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -314,7 +315,7 @@ public function getFeedbacks(Request $request)
             ];
         });
 
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -336,7 +337,7 @@ public function getFeedbacks(Request $request)
     public function addFeedback(Request $request)
 {
     try {
-        
+
         if (!$request->bearerToken()) {
             return response()->json([
                 'success' => false,
@@ -344,7 +345,7 @@ public function getFeedbacks(Request $request)
             ], 401);
         }
 
-        
+
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
@@ -354,29 +355,31 @@ public function getFeedbacks(Request $request)
             ], 401);
         }
 
-        
+
         $validatedData = $request->validate([
-            'comment' => 'required|string|max:500', 
-            'rating' => 'required|numeric|min:1|max:5', 
-            'professor_id' => 'required|exists:users,id', 
+            'comment' => 'required|string|max:500',
+            'rating' => 'required|numeric|min:1|max:5',
+            'professor_id' => 'required|exists:users,id',
             'course_id' => 'required|exists:courses,id',
         ]);
 
-        
+
         $feedback = Feedback::create([
             'comment' => $validatedData['comment'],
             'rating' => $validatedData['rating'],
             'professor_id' => $validatedData['professor_id'],
             'course_id' => $validatedData['course_id'],
-            'student_id' => $user->id, 
+            'student_id' => $user->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
+        Cache::forget("professor_ai_analysis_{$feedback->professor_id}");
+
         return response()->json([
             'success' => true,
             'message' => 'نظر با موفقیت ثبت شد'
-        ], 201); 
+        ], 201);
 
     } catch (\Exception $e) {
         return response()->json([

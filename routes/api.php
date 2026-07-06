@@ -1,13 +1,14 @@
 <?php
 
 
-use Illuminate\Support\Facades\Route;   
-use App\Http\Controllers\FeedbackController;  
-use App\Http\Controllers\CourseController;  
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FeedbackReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\AIController;
 
 // مربوط به فلو یوزر
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,7 +25,7 @@ Route::middleware('auth:api')->group(function () {
 //مربوط به فلو مهمان
 Route::get('/search', [SearchController::class, 'search']);
 Route::get('/feedbacks/{professor_username}', [FeedbackController::class, 'getProfessorFeedbacks']);
-Route::get('/courses', [CourseController::class, 'guestIndex']); 
+Route::get('/courses', [CourseController::class, 'guestIndex']);
 Route::get('/courses/{slug}', [CourseController::class, 'show']);
 Route::get('/professors', [UserController::class, 'index']);
 Route::get('/professors/{username}', [UserController::class, 'showProfessorByUsername']);
@@ -33,3 +34,10 @@ Route::get('/professors/top-rated', [UserController::class, 'topRatedProfessors'
 Route::get('/professors/top-rated/{limit}', [UserController::class, 'topRatedProfessors']);
 Route::get('/feedbacks', [FeedbackController::class, 'getFeedbacks'])
     ->name('api.feedbacks.index');
+
+//مربوط به AI
+Route::get('/ai/test', [AIController::class, 'test']);
+Route::get(
+'/professors/{username}/ai-analysis',
+[AIController::class,'analyzeProfessor']
+);
