@@ -71,7 +71,6 @@ Version Control
 Deployment
 
 - Liara
-- Koyeb
 
 ---
 
